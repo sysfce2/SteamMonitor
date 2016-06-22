@@ -1,27 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading;
 
 namespace StatusService
 {
     class MonitorThread
     {
-        static MonitorThread _instance = new MonitorThread();
-        public static MonitorThread Instance { get { return _instance; } }
-
-
         Thread monitorThread;
         bool monitorRunning;
 
-
-        MonitorThread()
+        public MonitorThread()
         {
-            monitorThread = new Thread( MonitorLoop );
+            monitorThread = new Thread(MonitorLoop);
         }
-
 
         public void Start()
         {
@@ -29,22 +18,21 @@ namespace StatusService
             monitorThread.Start();
         }
 
-
         public void Stop()
         {
             monitorRunning = false;
             monitorThread.Join();
         }
 
-
         void MonitorLoop()
         {
             SteamManager.Instance.Start();
 
-            while ( true )
+            while (true)
             {
-                if ( !monitorRunning )
+                if (!monitorRunning)
                 {
+                    Log.WriteInfo("MonitorThread", "Stopping");
                     SteamManager.Instance.Stop();
                     break;
                 }
