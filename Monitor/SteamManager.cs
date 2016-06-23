@@ -118,7 +118,7 @@ namespace StatusService
         {
             string keyName = monitor.Server.ToString();
 
-            Log.WriteInfo("CM", "[{1}] {0} - EResult: {2}", keyName, isOnline ? "online " : "OFFLINE", result.ToString());
+            Log.WriteInfo("CM", "{1,7} | {0,21} | {2,20} | {3}", keyName, isOnline ? "online" : "OFFLINE", result.ToString(), lastAction);
 
             try
             {
