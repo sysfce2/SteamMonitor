@@ -12,6 +12,7 @@ namespace StatusService
         readonly SteamMonitorUser steamUser;
         readonly CallbackManager callbackMgr;
 
+        bool IsReconnecting;
         bool IsDisconnecting;
 
         DateTime nextConnect = DateTime.MaxValue;
@@ -63,6 +64,8 @@ namespace StatusService
             {
                 nextConnect = DateTime.Now + TimeSpan.FromMinutes(1);
 
+                IsReconnecting = true;
+
                 Client.Connect(Server);
             }
         }
@@ -89,7 +92,16 @@ namespace StatusService
             int numSeconds = new Random().Next(10, 30);
             Connect(DateTime.Now + TimeSpan.FromSeconds(numSeconds));
 
-            SteamManager.Instance.NotifyCMOffline(this, EResult.NoConnection, "OnDisconnected");
+            if (IsReconnecting)
+            {
+                IsReconnecting = false;
+
+                SteamManager.Instance.NotifyCMOffline(this, EResult.Expired, "OnDisconnected (reconnect)");
+            }
+            else
+            {
+                SteamManager.Instance.NotifyCMOffline(this, EResult.NoConnection, "OnDisconnected");
+            }
         }
 
         protected void OnLoggedOn(SteamUser.LoggedOnCallback callback)
