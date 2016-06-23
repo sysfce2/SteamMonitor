@@ -57,7 +57,7 @@ namespace StatusService
             // thread quantum granularity might hose us,
             // but it should wake often enough to handle callbacks within a single thread
 
-            callbackMgr.RunWaitCallbacks(TimeSpan.FromMilliseconds(10));
+            callbackMgr.RunWaitAllCallbacks(TimeSpan.FromMilliseconds(10));
 
             if (DateTime.Now >= nextConnect)
             {
