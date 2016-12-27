@@ -106,19 +106,19 @@ namespace StatusService
 
         public void NotifyCMOnline(Monitor monitor, string lastAction)
         {
-            UpdateCMStatus(monitor, true, EResult.OK, lastAction);
+            UpdateCMStatus(monitor, EResult.OK, lastAction);
         }
 
         public void NotifyCMOffline(Monitor monitor, EResult result, string lastAction)
         {
-            UpdateCMStatus(monitor, false, result, lastAction);
+            UpdateCMStatus(monitor, result, lastAction);
         }
 
-        private void UpdateCMStatus(Monitor monitor, bool isOnline, EResult result, string lastAction)
+        private void UpdateCMStatus(Monitor monitor, EResult result, string lastAction)
         {
             string keyName = monitor.Server.ToString();
 
-            Log.WriteInfo("CM", "{1,7} | {0,21} | {2,20} | {3}", keyName, isOnline ? "online" : "OFFLINE", result.ToString(), lastAction);
+            Log.WriteInfo("CM", "{0,21} | {1,20} | {2}", keyName, result.ToString(), lastAction);
 
             try
             {
@@ -128,7 +128,7 @@ namespace StatusService
                     new[]
                     {
                         new MySqlParameter("@IP", keyName),
-                        new MySqlParameter("@Status", isOnline),
+                        new MySqlParameter("@Status", result.ToString()),
                         new MySqlParameter("@LastAction", lastAction)
                     }
                 );
