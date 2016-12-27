@@ -38,13 +38,13 @@
       <HintPath>packages\protobuf-net.2.0.0.668\lib\net40\protobuf-net.dll</HintPath>
     </Reference>
     <Reference Include="System.Data" />
-    <Reference Include="SteamKit2">
-      <HintPath>packages\SteamKit2.1.7.0\lib\net45\SteamKit2.dll</HintPath>
-    </Reference>
-    <Reference Include="MySql.Data">
-      <HintPath>packages\MySql.Data.6.9.8\lib\net45\MySql.Data.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="MySql.Data">
+      <HintPath>packages\MySql.Data.6.9.9\lib\net45\MySql.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="SteamKit2">
+      <HintPath>packages\SteamKit2.1.8.0\lib\net45\SteamKit2.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Utils\Log.cs" />
