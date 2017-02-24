@@ -39,7 +39,7 @@ namespace StatusService
         public void Start()
         {
             // Reset all statuses
-            MySqlHelper.ExecuteNonQuery(databaseConnectionString, "UPDATE `CMs` SET `Status` = 0, `LastAction` = 'Application start'");
+            MySqlHelper.ExecuteNonQuery(databaseConnectionString, "UPDATE `CMs` SET `Status` = 'Invalid', `LastAction` = 'Application start'");
 
             // Seed CM list with old CMs in the database
             var servers = new List<IPEndPoint>();
@@ -71,7 +71,7 @@ namespace StatusService
             }
 
             // Reset all statuses
-            MySqlHelper.ExecuteNonQuery(databaseConnectionString, "UPDATE `CMs` SET `Status` = 0, `LastAction` = 'Application stop'");
+            MySqlHelper.ExecuteNonQuery(databaseConnectionString, "UPDATE `CMs` SET `Status` = 'Invalid', `LastAction` = 'Application stop'");
         }
 
         public void Crash()
