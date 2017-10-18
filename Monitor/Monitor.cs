@@ -1,12 +1,12 @@
-﻿using SteamKit2;
-using System;
-using System.Net;
+﻿using System;
+using SteamKit2;
+using SteamKit2.Discovery;
 
 namespace StatusService
 {
     class Monitor
     {
-        public IPEndPoint Server { get; private set; }
+        public ServerRecord Server { get; }
 
         readonly SteamClient Client;
         readonly SteamMonitorUser steamUser;
@@ -17,13 +17,15 @@ namespace StatusService
 
         DateTime nextConnect = DateTime.MaxValue;
 
-        public Monitor(IPEndPoint server)
+        public Monitor(ServerRecord server)
         {
             Server = server;
 
-            Client = new SteamClient();
-
-            Client.ConnectionTimeout = TimeSpan.FromSeconds(15);
+            Client = new SteamClient(SteamConfiguration.Create(b => b
+                .WithDirectoryFetch(false)
+                .WithProtocolTypes(ProtocolTypes.Tcp)
+                .WithConnectionTimeout(TimeSpan.FromSeconds(15))
+            ));
 
             steamUser = new SteamMonitorUser();
             Client.AddHandler(steamUser);
@@ -70,28 +72,21 @@ namespace StatusService
             }
         }
 
-        protected void OnConnected(SteamClient.ConnectedCallback callback)
+        private void OnConnected(SteamClient.ConnectedCallback callback)
         {
-            if (callback.Result != EResult.OK)
-            {
-                SteamManager.Instance.NotifyCMOffline(this, callback.Result, string.Format("Connected: {0}", callback.Result));
-
-                return;
-            }
-
             Reconnecting = 0;
 
             steamUser.LogOn();
         }
 
-        protected void OnDisconnected(SteamClient.DisconnectedCallback callback)
+        private void OnDisconnected(SteamClient.DisconnectedCallback callback)
         {
             if (IsDisconnecting)
             {
                 return;
             }
 
-            int numSeconds = new Random().Next(10, 30);
+            var numSeconds = new Random().Next(10, 30);
             Connect(DateTime.Now + TimeSpan.FromSeconds(numSeconds));
 
             // If Steam dies, don't say next connect is planned
@@ -103,7 +98,7 @@ namespace StatusService
             SteamManager.Instance.NotifyCMOffline(this, Reconnecting == 1 ? EResult.OK : EResult.NoConnection, string.Format("Disconnected (#{0})", Reconnecting));
         }
 
-        protected void OnLoggedOn(SteamUser.LoggedOnCallback callback)
+        private void OnLoggedOn(SteamUser.LoggedOnCallback callback)
         {
             if (callback.Result != EResult.OK)
             {
@@ -120,12 +115,12 @@ namespace StatusService
                 + TimeSpan.FromMinutes(new Random().NextDouble() * 5));
         }
 
-        protected void OnLoggedOff(SteamUser.LoggedOffCallback callback)
+        private void OnLoggedOff(SteamUser.LoggedOffCallback callback)
         {
             SteamManager.Instance.NotifyCMOffline(this, callback.Result, string.Format("LoggedOff: {0}", callback.Result));
         }
 
-        protected void OnCMList(SteamClient.CMListCallback callback)
+        private static void OnCMList(SteamClient.CMListCallback callback)
         {
             SteamManager.Instance.UpdateCMList(callback.Servers);
         }

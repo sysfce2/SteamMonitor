@@ -9,7 +9,7 @@ namespace StatusService
         {
             var logonMsg = new ClientMsgProtobuf<CMsgClientLogon>(EMsg.ClientLogon);
 
-            var steamId = new SteamID(0, SteamID.AllInstances, Client.ConnectedUniverse, EAccountType.AnonUser);
+            var steamId = new SteamID(0, SteamID.AllInstances, Client.Universe, EAccountType.AnonUser);
 
             logonMsg.ProtoHeader.steamid = steamId;
             logonMsg.Body.protocol_version = MsgClientLogon.CurrentProtocol;

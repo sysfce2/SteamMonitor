@@ -22,15 +22,7 @@ namespace StatusService
 
         private static void WriteLine(Category category, string component, string format, params object[] args)
         {
-            string logLine = string.Format(
-                "{0} [{1}] {2}: {3}",
-                DateTime.Now.ToLongTimeString(),
-                category.ToString().ToUpper(),
-                component,
-                string.Format(format, args)
-            );
-
-            Console.WriteLine(logLine);
+            Console.WriteLine($"{DateTime.Now.ToLongTimeString()} [{category.ToString().ToUpper()}] {component}: {string.Format(format, args)}");
         }
     }
 }

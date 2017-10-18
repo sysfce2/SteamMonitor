@@ -4,7 +4,7 @@ namespace StatusService
 {
     class MonitorThread
     {
-        Thread monitorThread;
+        readonly Thread monitorThread;
         bool monitorRunning;
 
         public MonitorThread()
@@ -24,7 +24,7 @@ namespace StatusService
             monitorThread.Join();
         }
 
-        void MonitorLoop()
+        private void MonitorLoop()
         {
             SteamManager.Instance.Start();
 
