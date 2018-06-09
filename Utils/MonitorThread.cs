@@ -9,7 +9,10 @@ namespace StatusService
 
         public MonitorThread()
         {
-            monitorThread = new Thread(MonitorLoop);
+            monitorThread = new Thread(MonitorLoop)
+            {
+                Name = "MonitorLoop Thread"
+            };
         }
 
         public void Start()
