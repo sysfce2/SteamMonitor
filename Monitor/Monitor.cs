@@ -23,7 +23,7 @@ namespace StatusService
 
             Client = new SteamClient(SteamConfiguration.Create(b => b
                 .WithDirectoryFetch(false)
-                .WithProtocolTypes(ProtocolTypes.Tcp)
+                .WithProtocolTypes(server.ProtocolTypes & ~ProtocolTypes.Udp)
                 .WithConnectionTimeout(TimeSpan.FromSeconds(15))
             ));
 

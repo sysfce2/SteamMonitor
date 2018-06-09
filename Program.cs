@@ -13,6 +13,8 @@ namespace StatusService
                 Log.WriteInfo("Program", "Stopping");
 
                 monitorThread.Stop();
+
+                Environment.Exit(0);
             };
 
             AppDomain.CurrentDomain.UnhandledException += delegate(object sender, UnhandledExceptionEventArgs e)
