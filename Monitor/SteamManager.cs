@@ -17,6 +17,8 @@ namespace StatusService
 
         readonly ConcurrentDictionary<ServerRecord, Monitor> monitors;
 
+        readonly SteamConfiguration SharedConfig;
+
         readonly string databaseConnectionString;
 
         DateTime NextCMListUpdate;
@@ -24,6 +26,12 @@ namespace StatusService
         private SteamManager()
         {
             monitors = new ConcurrentDictionary<ServerRecord, Monitor>();
+
+            SharedConfig = SteamConfiguration.Create(b => b
+                .WithDirectoryFetch(false)
+                .WithProtocolTypes(ProtocolTypes.Tcp | ProtocolTypes.WebSocket)
+                .WithConnectionTimeout(TimeSpan.FromSeconds(15))
+            );
 
             var path = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "database.txt");
 
@@ -99,7 +107,7 @@ namespace StatusService
                     continue;
                 }
 
-                var newMonitor = new Monitor(cm);
+                var newMonitor = new Monitor(cm, SharedConfig);
 
                 monitors.TryAdd(cm, newMonitor);
 

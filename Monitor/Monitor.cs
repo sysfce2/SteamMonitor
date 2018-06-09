@@ -17,16 +17,12 @@ namespace StatusService
 
         DateTime nextConnect = DateTime.MaxValue;
 
-        public Monitor(ServerRecord server)
+        public Monitor(ServerRecord server, SteamConfiguration config)
         {
             Server = server;
 
-            Client = new SteamClient(SteamConfiguration.Create(b => b
-                .WithDirectoryFetch(false)
-                .WithProtocolTypes(server.ProtocolTypes & ~ProtocolTypes.Udp)
-                .WithConnectionTimeout(TimeSpan.FromSeconds(15))
-            ));
-
+            Client = new SteamClient(config);
+            
             steamUser = new SteamMonitorUser();
             Client.AddHandler(steamUser);
 
