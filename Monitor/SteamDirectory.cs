@@ -68,12 +68,7 @@ namespace StatusService
 
         public static string ServerRecordToString(ServerRecord record)
         {
-            if (record.EndPoint is DnsEndPoint dns)
-            {
-                return $"{dns.Host}:{dns.Port}";
-            }
-
-            return record.EndPoint.ToString();
+            return $"{record.GetHost()}:{record.GetPort()}";
         }
     }
 }

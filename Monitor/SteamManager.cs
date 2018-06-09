@@ -103,9 +103,9 @@ namespace StatusService
 
                 monitors.TryAdd(cm, newMonitor);
 
-                newMonitor.Connect(DateTime.Now + TimeSpan.FromSeconds(++x % 40));
+                UpdateCMStatus(newMonitor, EResult.Invalid, "New server");
 
-                Log.WriteInfo("SteamManager", "CM {0} ({1}) has been added to CM list", SteamDirectory.ServerRecordToString(cm), cm.ProtocolTypes);
+                newMonitor.Connect(DateTime.Now + TimeSpan.FromSeconds(++x % 40));
             }
         }
 
