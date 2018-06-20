@@ -12,6 +12,8 @@ namespace StatusService
     // Mostly copied from SteamKit's LoadAsync because we have to set `maxcount`
     static class SteamDirectory
     {
+        private static readonly Random Random = new Random();
+
         public static Task<IReadOnlyCollection<ServerRecord>> LoadAsync()
         {
             var directory = WebAPI.GetAsyncInterface("ISteamDirectory");
@@ -69,6 +71,11 @@ namespace StatusService
         public static string ServerRecordToString(ServerRecord record)
         {
             return $"{record.GetHost()}:{record.GetPort()}";
+        }
+
+        public static uint GetNextRandom()
+        {
+            return (uint)Random.Next(0, int.MaxValue);
         }
     }
 }

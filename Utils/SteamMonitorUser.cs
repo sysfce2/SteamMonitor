@@ -13,7 +13,7 @@ namespace StatusService
 
             logonMsg.ProtoHeader.steamid = steamId;
             logonMsg.Body.protocol_version = MsgClientLogon.CurrentProtocol;
-            logonMsg.Body.obfustucated_private_ip = 1337;
+            logonMsg.Body.obfustucated_private_ip = SteamDirectory.GetNextRandom();
 
             Client.Send(logonMsg);
 
