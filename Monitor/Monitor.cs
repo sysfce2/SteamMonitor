@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using SteamKit2;
 using SteamKit2.Discovery;
 
@@ -16,6 +17,8 @@ namespace StatusService
         bool IsDisconnecting;
 
         DateTime nextConnect = DateTime.MaxValue;
+
+        private readonly TimeSpan CallbackTimeout = TimeSpan.FromMilliseconds(10);
 
         public Monitor(ServerRecord server, SteamConfiguration config)
         {
@@ -56,7 +59,7 @@ namespace StatusService
             // thread quantum granularity might hose us,
             // but it should wake often enough to handle callbacks within a single thread
 
-            callbackMgr.RunWaitAllCallbacks(TimeSpan.FromMilliseconds(10));
+            callbackMgr.RunWaitAllCallbacks(CallbackTimeout);
 
             if (DateTime.Now >= nextConnect)
             {
@@ -64,7 +67,7 @@ namespace StatusService
 
                 Reconnecting++;
 
-                Client.Connect(Server);
+                Task.Run(() => Client.Connect(Server));
             }
         }
 
