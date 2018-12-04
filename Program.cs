@@ -19,11 +19,11 @@ namespace StatusService
                 Environment.Exit(0);
             };
 
-            AppDomain.CurrentDomain.UnhandledException += delegate(object sender, UnhandledExceptionEventArgs e)
+            AppDomain.CurrentDomain.UnhandledException += (object sender, UnhandledExceptionEventArgs e) =>
             {
                 Log.WriteError("Program", "Unhandled exception: {0}", e.ExceptionObject);
 
-                if(e.IsTerminating)
+                if (e.IsTerminating)
                 {
                     SteamManager.Instance.Crash();
                 }

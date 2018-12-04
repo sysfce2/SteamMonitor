@@ -25,7 +25,7 @@ namespace StatusService
             Server = server;
 
             Client = new SteamClient(config);
-            
+
             steamUser = new SteamMonitorUser();
             Client.AddHandler(steamUser);
 

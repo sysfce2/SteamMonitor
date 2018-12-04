@@ -102,7 +102,7 @@ namespace StatusService
 
             foreach (var cm in cmList)
             {
-                if (monitors.Keys.FirstOrDefault(s => s.Equals(cm)) != null)
+                if (monitors.Keys.Any(s => s.Equals(cm)))
                 {
                     continue;
                 }
@@ -172,7 +172,7 @@ namespace StatusService
                 Log.WriteError("Web API", "{0}", e);
             }
         }
-        
+
         private MySqlConnection GetConnection()
         {
             var connection = new MySqlConnection(databaseConnectionString);

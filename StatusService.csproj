@@ -5,7 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Dapper" Version="1.50.5" />
-    <PackageReference Include="MySqlConnector" Version="0.41.0" />
-    <PackageReference Include="SteamKit2" Version="2.1.0-Beta.1" />
+    <PackageReference Include="MySqlConnector" Version="0.47.1" />
+    <PackageReference Include="SteamKit2" Version="2.1.0" />
   </ItemGroup>
 </Project>

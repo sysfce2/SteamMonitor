@@ -24,7 +24,7 @@ namespace StatusService
             };
 
             var task = directory.CallAsync(HttpMethod.Get, "GetCMList", version: 1, args: args);
-            return task.ContinueWith(t =>
+            return task.ContinueWith(_ =>
             {
                 var response = task.Result;
                 var result = (EResult)response["result"].AsInteger();
