@@ -6,6 +6,8 @@ namespace StatusService
     {
         static void Main()
         {
+            Console.Title = "Steam Monitor";
+
             var monitorThread = new MonitorThread();
 
             Console.CancelKeyPress += delegate
