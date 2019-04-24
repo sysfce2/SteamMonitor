@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using MySql.Data.MySqlClient;
@@ -14,6 +15,8 @@ namespace StatusService
     class SteamManager
     {
         public static SteamManager Instance { get; } = new SteamManager();
+
+        readonly Random Random = new Random();
 
         readonly ConcurrentDictionary<ServerRecord, Monitor> monitors;
 
@@ -57,7 +60,7 @@ namespace StatusService
 
             foreach (var monitor in monitors.Values)
             {
-                Log.WriteInfo("SteamManager", "Disconnecting monitor {0}", SteamDirectory.ServerRecordToString(monitor.Server));
+                Log.WriteInfo("SteamManager", "Disconnecting monitor {0}", ServerRecordToString(monitor.Server));
 
                 monitor.Disconnect();
             }
@@ -96,6 +99,11 @@ namespace StatusService
             }
         }
 
+        public uint GetNextRandom()
+        {
+            return (uint)Random.Next(0, int.MaxValue);
+        }
+
         public void UpdateCMList(IEnumerable<ServerRecord> cmList)
         {
             var x = 0;
@@ -129,7 +137,7 @@ namespace StatusService
 
         private void UpdateCMStatus(Monitor monitor, EResult result, string lastAction)
         {
-            var keyName = SteamDirectory.ServerRecordToString(monitor.Server);
+            var keyName = ServerRecordToString(monitor.Server);
 
             Log.WriteInfo("CM", "{0,40} | {1,10} | {2,20} | {3}", keyName, monitor.Server.ProtocolTypes, result, lastAction);
 
@@ -161,7 +169,7 @@ namespace StatusService
 
             try
             {
-                var servers = (await SteamDirectory.LoadAsync()).ToList();
+                var servers = (await SteamDirectory.LoadAsync(SharedConfig, int.MaxValue, CancellationToken.None)).ToList();
 
                 Log.WriteInfo("Web API", "Got {0} CMs", servers.Count);
 
@@ -180,6 +188,11 @@ namespace StatusService
             connection.Open();
 
             return connection;
+        }
+
+        private static string ServerRecordToString(ServerRecord record)
+        {
+            return $"{record.GetHost()}:{record.GetPort()}";
         }
     }
 }
