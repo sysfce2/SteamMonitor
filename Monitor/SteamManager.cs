@@ -48,13 +48,7 @@ namespace StatusService
             databaseConnectionString = File.ReadAllText(path).Trim();
         }
 
-        public void Start()
-        {
-            // Remove old CMs from the database
-            Crash();
-        }
-
-        public void Stop()
+        public async Task Stop()
         {
             Log.WriteInfo("SteamManager", "Stopping");
 
@@ -68,18 +62,14 @@ namespace StatusService
             Log.WriteInfo("SteamManager", "All monitors disconnected");
 
             // Reset all statuses
-            using (var db = GetConnection())
-            {
-                db.Execute("UPDATE `CMs` SET `Status` = 'Invalid', `LastAction` = 'Application stop'");
-            }
+            using var db = await GetConnection();
+            await db.ExecuteAsync("UPDATE `CMs` SET `Status` = 'Invalid', `LastAction` = 'Application stop'");
         }
 
-        public void Crash()
+        public async Task DeleteAllCms()
         {
-            using (var db = GetConnection())
-            {
-                db.Execute("DELETE FROM `CMs`");
-            }
+            using var db = await GetConnection();
+            await db.ExecuteAsync("DELETE FROM `CMs`");
         }
 
         public void Tick()
@@ -119,7 +109,7 @@ namespace StatusService
 
                 monitors.TryAdd(cm, newMonitor);
 
-                UpdateCMStatus(newMonitor, EResult.Invalid, "New server");
+                _ = UpdateCMStatus(newMonitor, EResult.Invalid, "New server");
 
                 newMonitor.Connect(DateTime.Now + TimeSpan.FromSeconds(++x % 40));
             }
@@ -127,15 +117,15 @@ namespace StatusService
 
         public void NotifyCMOnline(Monitor monitor, string lastAction)
         {
-            UpdateCMStatus(monitor, EResult.OK, lastAction);
+            _ = UpdateCMStatus(monitor, EResult.OK, lastAction);
         }
 
         public void NotifyCMOffline(Monitor monitor, EResult result, string lastAction)
         {
-            UpdateCMStatus(monitor, result, lastAction);
+            _ = UpdateCMStatus(monitor, result, lastAction);
         }
 
-        private void UpdateCMStatus(Monitor monitor, EResult result, string lastAction)
+        private async Task UpdateCMStatus(Monitor monitor, EResult result, string lastAction)
         {
             var keyName = ServerRecordToString(monitor.Server);
 
@@ -143,19 +133,17 @@ namespace StatusService
 
             try
             {
-                using (var db = GetConnection())
-                {
-                    db.Execute(
-                        "INSERT INTO `CMs` (`Address`, `IsWebSocket`, `Status`, `LastAction`) VALUES(@IP, @IsWebSocket, @Status, @LastAction) ON DUPLICATE KEY UPDATE `Status` = VALUES(`Status`), `LastAction` = VALUES(`LastAction`)",
-                        new
-                        {
-                            IP = keyName,
-                            IsWebSocket = (monitor.Server.ProtocolTypes & ProtocolTypes.WebSocket) > 0,
-                            Status = result.ToString(),
-                            LastAction = lastAction
-                        }
-                    );
-                }
+                using var db = await GetConnection();
+                await db.ExecuteAsync(
+                    "INSERT INTO `CMs` (`Address`, `IsWebSocket`, `Status`, `LastAction`) VALUES(@IP, @IsWebSocket, @Status, @LastAction) ON DUPLICATE KEY UPDATE `Status` = VALUES(`Status`), `LastAction` = VALUES(`LastAction`)",
+                    new
+                    {
+                        IP = keyName,
+                        IsWebSocket = (monitor.Server.ProtocolTypes & ProtocolTypes.WebSocket) > 0,
+                        Status = result.ToString(),
+                        LastAction = lastAction
+                    }
+                );
             }
             catch (MySqlException e)
             {
@@ -181,11 +169,11 @@ namespace StatusService
             }
         }
 
-        private MySqlConnection GetConnection()
+        private async Task<MySqlConnection> GetConnection()
         {
             var connection = new MySqlConnection(databaseConnectionString);
 
-            connection.Open();
+            await connection.OpenAsync();
 
             return connection;
         }

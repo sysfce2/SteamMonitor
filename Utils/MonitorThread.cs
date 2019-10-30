@@ -29,14 +29,14 @@ namespace StatusService
 
         private void MonitorLoop()
         {
-            SteamManager.Instance.Start();
+            SteamManager.Instance.DeleteAllCms().GetAwaiter().GetResult();
 
             while (true)
             {
                 if (!monitorRunning)
                 {
                     Log.WriteInfo("MonitorThread", "Stopping");
-                    SteamManager.Instance.Stop();
+                    SteamManager.Instance.Stop().GetAwaiter().GetResult();
                     break;
                 }
 

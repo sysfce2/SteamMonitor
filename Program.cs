@@ -25,7 +25,7 @@ namespace StatusService
 
                 if (e.IsTerminating)
                 {
-                    SteamManager.Instance.Crash();
+                    SteamManager.Instance.DeleteAllCms().GetAwaiter().GetResult();
                 }
             };
 
