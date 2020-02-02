@@ -16,9 +16,12 @@ namespace StatusService
         uint Reconnecting;
         bool IsDisconnecting;
 
+        public DateTime LastSeen { get; set; }
+        DateTime LastSuccess = DateTime.Now;
         DateTime nextConnect = DateTime.MaxValue;
 
-        private readonly TimeSpan CallbackTimeout = TimeSpan.FromMilliseconds(10);
+        private readonly static TimeSpan CallbackTimeout = TimeSpan.FromMilliseconds(10);
+        private readonly static TimeSpan NoSuccessRemoval = TimeSpan.FromDays(1);
 
         public Monitor(ServerRecord server, SteamConfiguration config)
         {
@@ -85,8 +88,17 @@ namespace StatusService
                 return;
             }
 
-            var numSeconds = new Random().Next(10, 30);
-            Connect(DateTime.Now + TimeSpan.FromSeconds(numSeconds));
+            var now = DateTime.Now;
+
+            if (LastSuccess + NoSuccessRemoval < now && LastSeen + NoSuccessRemoval < now)
+            {
+                IsDisconnecting = true;
+                Task.Run(() => SteamManager.Instance.RemoveCM(this));
+                return;
+            }
+
+            var numSeconds = SteamManager.Instance.Random.Next(10, 30);
+            Connect(now + TimeSpan.FromSeconds(numSeconds));
 
             // If Steam dies, don't say next connect is planned
             if (Reconnecting == 0)
@@ -108,10 +120,12 @@ namespace StatusService
 
             SteamManager.Instance.NotifyCMOnline(this, "Online");
 
+            LastSuccess = DateTime.Now;
+
             // schedule a random reconnect
-            Connect(DateTime.Now
+            Connect(LastSuccess
                 + TimeSpan.FromMinutes(5)
-                + TimeSpan.FromMinutes(new Random().NextDouble() * 5));
+                + TimeSpan.FromMinutes(SteamManager.Instance.Random.NextDouble() * 5));
         }
 
         private void OnLoggedOff(SteamUser.LoggedOffCallback callback)

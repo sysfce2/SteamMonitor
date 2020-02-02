@@ -33,7 +33,7 @@ namespace StatusService
 
         public static SteamManager Instance { get; } = new SteamManager();
 
-        readonly Random Random = new Random();
+        public readonly Random Random = new Random();
 
         readonly ConcurrentDictionary<ServerRecord, Monitor> monitors;
 
@@ -112,9 +112,30 @@ namespace StatusService
             }
         }
 
-        public uint GetNextRandom()
+        public async Task RemoveCM(Monitor monitor)
         {
-            return (uint)Random.Next(0, int.MaxValue);
+            var address = ServerRecordToString(monitor.Server);
+
+            Log.WriteInfo("SteamManager", $"Removing server: {address}");
+
+            monitors.TryRemove(monitor.Server, out _);
+
+            try
+            {
+                using var db = await GetConnection();
+                await db.ExecuteAsync(
+                    "DELETE FROM`CMs` WHERE `Address` = @Address AND `IsWebSocket` = @IsWebSocket",
+                    new
+                    {
+                        Address = address,
+                        IsWebSocket = (monitor.Server.ProtocolTypes & ProtocolTypes.WebSocket) > 0 ? 1 : 0,
+                    }
+                );
+            }
+            catch (MySqlException e)
+            {
+                Log.WriteError("UpdateCM", $"Failed to remove server: {e.Message}");
+            }
         }
 
         public void UpdateCMList(IEnumerable<ServerRecord> cmList)
@@ -123,8 +144,12 @@ namespace StatusService
 
             foreach (var cm in cmList)
             {
-                if (monitors.Keys.Any(s => s.Equals(cm)))
+                var monitor = monitors.Where(s => s.Key.Equals(cm)).ToArray();
+
+                if (monitor.Length > 0)
                 {
+                    monitor[0].Value.LastSeen = DateTime.Now;
+
                     continue;
                 }
 
