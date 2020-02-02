@@ -29,8 +29,6 @@ namespace StatusService
 
         private void MonitorLoop()
         {
-            SteamManager.Instance.DeleteAllCms().GetAwaiter().GetResult();
-
             while (true)
             {
                 if (!monitorRunning)

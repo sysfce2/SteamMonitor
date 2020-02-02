@@ -22,11 +22,6 @@ namespace StatusService
             AppDomain.CurrentDomain.UnhandledException += (object sender, UnhandledExceptionEventArgs e) =>
             {
                 Log.WriteError("Program", "Unhandled exception: {0}", e.ExceptionObject);
-
-                if (e.IsTerminating)
-                {
-                    SteamManager.Instance.DeleteAllCms().GetAwaiter().GetResult();
-                }
             };
 
             monitorThread.Start();

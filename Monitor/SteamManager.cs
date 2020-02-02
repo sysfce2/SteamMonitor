@@ -66,12 +66,6 @@ namespace StatusService
             await db.ExecuteAsync("UPDATE `CMs` SET `Status` = 'Invalid', `LastAction` = 'Application stop'");
         }
 
-        public async Task DeleteAllCms()
-        {
-            using var db = await GetConnection();
-            await db.ExecuteAsync("DELETE FROM `CMs`");
-        }
-
         public void Tick()
         {
             var monitorsCached = monitors.Values.ToList();
