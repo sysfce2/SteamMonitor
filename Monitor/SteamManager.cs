@@ -21,21 +21,13 @@ namespace StatusService
 
             public ServerRecord GetServerRecord()
             {
-                var ep = Address.Split(':');
-
-                if (ep.Length != 2)
+                if (IsWebSocket)
                 {
-                    throw new FormatException("Invalid endpoint format");
+                    return ServerRecord.CreateWebSocketServer(Address);
                 }
 
-                if (!int.TryParse(ep[1], out var port))
-                {
-                    throw new FormatException("Invalid port");
-                }
-
-                var types = IsWebSocket ? ProtocolTypes.WebSocket : ProtocolTypes.Tcp | ProtocolTypes.Udp;
-
-                return ServerRecord.CreateServer(ep[0], port, types);
+                ServerRecord.TryCreateSocketServer(Address, out var record);
+                return record;
             }
         }
 
