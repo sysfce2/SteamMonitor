@@ -29,6 +29,8 @@ namespace StatusService
 
         private void MonitorLoop()
         {
+            SteamManager.Instance.Start().GetAwaiter().GetResult();
+
             while (true)
             {
                 if (!monitorRunning)

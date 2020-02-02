@@ -14,6 +14,31 @@ namespace StatusService
 {
     class SteamManager
     {
+        class DatabaseRecord
+        {
+            public string Address;
+            public bool IsWebSocket;
+
+            public ServerRecord GetServerRecord()
+            {
+                var ep = Address.Split(':');
+
+                if (ep.Length != 2)
+                {
+                    throw new FormatException("Invalid endpoint format");
+                }
+
+                if (!int.TryParse(ep[1], out var port))
+                {
+                    throw new FormatException("Invalid port");
+                }
+
+                var types = IsWebSocket ? ProtocolTypes.WebSocket : ProtocolTypes.Tcp | ProtocolTypes.Udp;
+
+                return ServerRecord.CreateServer(ep[0], port, types);
+            }
+        }
+
         public static SteamManager Instance { get; } = new SteamManager();
 
         readonly Random Random = new Random();
@@ -46,6 +71,18 @@ namespace StatusService
             }
 
             databaseConnectionString = File.ReadAllText(path).Trim();
+        }
+
+        public async Task Start()
+        {
+            using var db = await GetConnection();
+
+            // Seed CM list with old CMs in the database
+            var servers = db.Query<DatabaseRecord>("SELECT `Address`, `IsWebSocket` FROM `CMs`").Select(x => x.GetServerRecord()).ToList();
+
+            Log.WriteInfo("SteamManager", "Got {0} old CMs", servers.Count);
+
+            UpdateCMList(servers);
         }
 
         public async Task Stop()
