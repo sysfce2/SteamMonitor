@@ -67,7 +67,7 @@ namespace StatusService
 
         public async Task Start()
         {
-            using var db = await GetConnection();
+            await using var db = await GetConnection();
 
             // Seed CM list with old CMs in the database
             var servers = db.Query<DatabaseRecord>("SELECT `Address`, `IsWebSocket` FROM `CMs`").Select(x => x.GetServerRecord()).ToList();
@@ -91,7 +91,7 @@ namespace StatusService
             Log.WriteInfo("SteamManager", "All monitors disconnected");
 
             // Reset all statuses
-            using var db = await GetConnection();
+            await using var db = await GetConnection();
             await db.ExecuteAsync("UPDATE `CMs` SET `Status` = 'Invalid', `LastAction` = 'Application stop'");
         }
 
@@ -122,7 +122,7 @@ namespace StatusService
 
             try
             {
-                using var db = await GetConnection();
+                await using var db = await GetConnection();
                 await db.ExecuteAsync(
                     "DELETE FROM`CMs` WHERE `Address` = @Address AND `IsWebSocket` = @IsWebSocket",
                     new
@@ -181,7 +181,7 @@ namespace StatusService
 
             try
             {
-                using var db = await GetConnection();
+                await using var db = await GetConnection();
                 await db.ExecuteAsync(
                     "INSERT INTO `CMs` (`Address`, `IsWebSocket`, `Status`, `LastAction`) VALUES(@IP, @IsWebSocket, @Status, @LastAction) ON DUPLICATE KEY UPDATE `Status` = VALUES(`Status`), `LastAction` = VALUES(`LastAction`)",
                     new

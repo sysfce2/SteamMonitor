@@ -19,7 +19,7 @@ namespace StatusService
                 Environment.Exit(0);
             };
 
-            AppDomain.CurrentDomain.UnhandledException += (object sender, UnhandledExceptionEventArgs e) =>
+            AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
             {
                 Log.WriteError("Program", "Unhandled exception: {0}", e.ExceptionObject);
             };

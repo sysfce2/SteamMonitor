@@ -20,8 +20,8 @@ namespace StatusService
         DateTime LastSuccess = DateTime.Now;
         DateTime nextConnect = DateTime.MaxValue;
 
-        private readonly static TimeSpan CallbackTimeout = TimeSpan.FromMilliseconds(10);
-        private readonly static TimeSpan NoSuccessRemoval = TimeSpan.FromDays(1);
+        private static readonly TimeSpan CallbackTimeout = TimeSpan.FromMilliseconds(10);
+        private static readonly TimeSpan NoSuccessRemoval = TimeSpan.FromDays(1);
 
         public Monitor(ServerRecord server, SteamConfiguration config)
         {
@@ -106,14 +106,14 @@ namespace StatusService
                 Reconnecting = 2;
             }
 
-            SteamManager.Instance.NotifyCMOffline(this, Reconnecting == 1 ? EResult.OK : EResult.NoConnection, string.Format("Disconnected (#{0})", Reconnecting));
+            SteamManager.Instance.NotifyCMOffline(this, Reconnecting == 1 ? EResult.OK : EResult.NoConnection, $"Disconnected (#{Reconnecting})");
         }
 
         private void OnLoggedOn(SteamUser.LoggedOnCallback callback)
         {
             if (callback.Result != EResult.OK)
             {
-                SteamManager.Instance.NotifyCMOffline(this, callback.Result, string.Format("LoggedOn: {0}", callback.Result));
+                SteamManager.Instance.NotifyCMOffline(this, callback.Result, $"LoggedOn: {callback.Result}");
 
                 return;
             }
@@ -130,7 +130,7 @@ namespace StatusService
 
         private void OnLoggedOff(SteamUser.LoggedOffCallback callback)
         {
-            SteamManager.Instance.NotifyCMOffline(this, callback.Result, string.Format("LoggedOff: {0}", callback.Result));
+            SteamManager.Instance.NotifyCMOffline(this, callback.Result, $"LoggedOff: {callback.Result}");
         }
 
         private static void OnCMList(SteamClient.CMListCallback callback)
