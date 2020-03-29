@@ -10,10 +10,12 @@ namespace StatusService
             var logonMsg = new ClientMsgProtobuf<CMsgClientLogon>(EMsg.ClientLogon);
 
             var steamId = new SteamID(0, SteamID.AllInstances, Client.Universe, EAccountType.AnonUser);
+            var randomIp = (uint)SteamManager.Instance.Random.Next(0, int.MaxValue);
 
             logonMsg.ProtoHeader.steamid = steamId;
             logonMsg.Body.protocol_version = MsgClientLogon.CurrentProtocol;
-            logonMsg.Body.obfustucated_private_ip = (uint)SteamManager.Instance.Random.Next(0, int.MaxValue);
+            logonMsg.Body.obfuscated_private_ip = new CMsgIPAddress {v4 = randomIp};
+            logonMsg.Body.deprecated_obfustucated_private_ip = randomIp;
 
             Client.Send(logonMsg);
 
