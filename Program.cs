@@ -12,7 +12,7 @@ namespace StatusService
 
             Console.CancelKeyPress += delegate
             {
-                Log.WriteInfo("Program", "Stopping");
+                Log.WriteInfo(nameof(Program), "Stopping");
 
                 monitorThread.Stop();
 
@@ -21,7 +21,7 @@ namespace StatusService
 
             AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
             {
-                Log.WriteError("Program", "Unhandled exception: {0}", e.ExceptionObject);
+                Log.WriteError(nameof(Program), "Unhandled exception: {0}", e.ExceptionObject);
             };
 
             monitorThread.Start();

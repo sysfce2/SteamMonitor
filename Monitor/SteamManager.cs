@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -74,23 +73,23 @@ namespace StatusService
             // Seed CM list with old CMs in the database
             var servers = db.Query<DatabaseRecord>("SELECT `Address`, `IsWebSocket` FROM `CMs`").Select(x => x.GetServerRecord()).ToList();
 
-            Log.WriteInfo("SteamManager", "Got {0} old CMs", servers.Count);
+            Log.WriteInfo(nameof(SteamManager), "Got {0} old CMs", servers.Count);
 
             UpdateCMList(servers);
         }
 
         public async Task Stop()
         {
-            Log.WriteInfo("SteamManager", "Stopping");
+            Log.WriteInfo(nameof(SteamManager), "Stopping");
 
             foreach (var monitor in monitors.Values)
             {
-                Log.WriteInfo("SteamManager", "Disconnecting monitor {0}", ServerRecordToString(monitor.Server));
+                Log.WriteInfo(nameof(SteamManager), "Disconnecting monitor {0}", ServerRecordToString(monitor.Server));
 
                 monitor.Disconnect();
             }
 
-            Log.WriteInfo("SteamManager", "All monitors disconnected");
+            Log.WriteInfo(nameof(SteamManager), "All monitors disconnected");
 
             // Reset all statuses
             await using var db = await GetConnection();
@@ -118,7 +117,7 @@ namespace StatusService
         {
             var address = ServerRecordToString(monitor.Server);
 
-            Log.WriteInfo("SteamManager", $"Removing server: {address}");
+            Log.WriteInfo(nameof(SteamManager), $"Removing server: {address}");
 
             monitors.TryRemove(monitor.Server, out _);
 
@@ -136,7 +135,7 @@ namespace StatusService
             }
             catch (MySqlException e)
             {
-                Log.WriteError("UpdateCM", $"Failed to remove server: {e.Message}");
+                Log.WriteError(nameof(SteamManager), $"Failed to remove server: {e.Message}");
             }
         }
 
@@ -195,13 +194,13 @@ namespace StatusService
             }
             catch (MySqlException e)
             {
-                Log.WriteError("UpdateCM", "Failed to update status of {0}: {1}", keyName, e.Message);
+                Log.WriteError(nameof(SteamManager), "Failed to update status of {0}: {1}", keyName, e.Message);
             }
         }
 
         private async Task UpdateCMListViaWebAPI()
         {
-            Log.WriteInfo("Web API", "Updating CM list");
+            Log.WriteInfo(nameof(SteamManager), "Updating CM list using webapi");
 
             try
             {
@@ -209,13 +208,13 @@ namespace StatusService
                 var chinaRealmServers = (await LoadChinaCMList(SharedConfig)).Where(s => !globalServers.Contains(s)).ToList();
                 var servers = globalServers.Concat(chinaRealmServers);
 
-                Log.WriteInfo("Web API", $"Got {globalServers.Count} servers plus {chinaRealmServers.Count} chinese servers");
+                Log.WriteInfo(nameof(SteamManager), $"Got {globalServers.Count} servers plus {chinaRealmServers.Count} chinese servers");
 
                 UpdateCMList(servers);
             }
             catch (Exception e)
             {
-                Log.WriteError("Web API", "{0}", e);
+                Log.WriteError(nameof(SteamManager), "Web API Exception: {0}", e);
             }
         }
 

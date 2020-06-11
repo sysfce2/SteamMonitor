@@ -31,17 +31,13 @@ namespace StatusService
         {
             SteamManager.Instance.Start().GetAwaiter().GetResult();
 
-            while (true)
+            while (monitorRunning)
             {
-                if (!monitorRunning)
-                {
-                    Log.WriteInfo("MonitorThread", "Stopping");
-                    SteamManager.Instance.Stop().GetAwaiter().GetResult();
-                    break;
-                }
-
                 SteamManager.Instance.Tick();
             }
+
+            Log.WriteInfo(nameof(MonitorThread), "Stopping");
+            SteamManager.Instance.Stop().GetAwaiter().GetResult();
         }
     }
 }
