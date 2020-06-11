@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
@@ -144,11 +146,9 @@ namespace StatusService
 
             foreach (var cm in cmList)
             {
-                var monitor = monitors.Where(s => s.Key.Equals(cm)).ToArray();
-
-                if (monitor.Length > 0)
+                if (monitors.TryGetValue(cm, out var monitor))
                 {
-                    monitor[0].Value.LastSeen = DateTime.Now;
+                    monitor.LastSeen = DateTime.Now;
 
                     continue;
                 }
@@ -205,9 +205,11 @@ namespace StatusService
 
             try
             {
-                var servers = (await SteamDirectory.LoadAsync(SharedConfig, int.MaxValue, CancellationToken.None)).ToList();
+                var globalServers = (await SteamDirectory.LoadAsync(SharedConfig, int.MaxValue, CancellationToken.None)).ToList();
+                var chinaRealmServers = (await LoadChinaCMList(SharedConfig)).Where(s => !globalServers.Contains(s)).ToList();
+                var servers = globalServers.Concat(chinaRealmServers);
 
-                Log.WriteInfo("Web API", "Got {0} CMs", servers.Count);
+                Log.WriteInfo("Web API", $"Got {globalServers.Count} servers plus {chinaRealmServers.Count} chinese servers");
 
                 UpdateCMList(servers);
             }
@@ -229,6 +231,52 @@ namespace StatusService
         private static string ServerRecordToString(ServerRecord record)
         {
             return $"{record.GetHost()}:{record.GetPort()}";
+        }
+
+        private static async Task<List<ServerRecord>> LoadChinaCMList(SteamConfiguration configuration)
+        {
+            var directory = configuration.GetAsyncWebAPIInterface("ISteamDirectory");
+            var args = new Dictionary<string, object>
+            {
+                ["cellid"] = "47", // Shanghai
+                ["maxcount"] = int.MaxValue.ToString(),
+                ["steamrealm"] = "steamchina",
+            };
+
+            var response = await directory.CallAsync(HttpMethod.Get, "GetCMList", 1, args).ConfigureAwait(false);
+
+            var result = (EResult)response["result"].AsInteger();
+            if (result != EResult.OK)
+            {
+                throw new InvalidOperationException($"Steam Web API returned EResult.{result}");
+            }
+
+            var socketList = response["serverlist"];
+            var websocketList = response["serverlist_websockets"];
+
+            var serverRecords = new List<ServerRecord>(socketList.Children.Count + websocketList.Children.Count);
+
+            foreach (var child in socketList.Children)
+            {
+                if (child.Value is null || !ServerRecord.TryCreateSocketServer(child.Value, out var record))
+                {
+                    continue;
+                }
+
+                serverRecords.Add(record);
+            }
+
+            foreach (var child in websocketList.Children)
+            {
+                if (child.Value is null)
+                {
+                    continue;
+                }
+
+                serverRecords.Add(ServerRecord.CreateWebSocketServer(child.Value));
+            }
+
+            return serverRecords;
         }
     }
 }

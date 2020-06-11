@@ -42,11 +42,7 @@ namespace StatusService
 
         public void Connect(DateTime? when = null)
         {
-            if (when == null)
-            {
-                when = DateTime.Now;
-            }
-
+            when ??= DateTime.Now;
             nextConnect = when.Value;
         }
 
