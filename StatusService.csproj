@@ -5,8 +5,8 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.0.30" />
-    <PackageReference Include="MySqlConnector" Version="0.63.0" />
-    <PackageReference Include="SteamKit2" Version="2.3.0-Beta.1" />
+    <PackageReference Include="Dapper" Version="2.0.35" />
+    <PackageReference Include="MySqlConnector" Version="0.69.1" />
+    <PackageReference Include="SteamKit2" Version="2.3.0-beta.2" />
   </ItemGroup>
 </Project>
