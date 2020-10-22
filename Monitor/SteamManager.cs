@@ -192,7 +192,7 @@ namespace StatusService
                     {
                         IP = keyName,
                         IsWebSocket = (monitor.Server.ProtocolTypes & ProtocolTypes.WebSocket) > 0,
-                        Status = result.ToString(),
+                        Status = (int)result
                     }
                 );
 
