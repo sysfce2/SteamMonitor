@@ -187,13 +187,12 @@ namespace StatusService
             {
                 await using var db = await GetConnection();
                 await db.ExecuteAsync(
-                    "INSERT INTO `CMs` (`Address`, `IsWebSocket`, `Status`, `LastAction`) VALUES(@IP, @IsWebSocket, @Status, @LastAction) ON DUPLICATE KEY UPDATE `Status` = VALUES(`Status`), `LastAction` = VALUES(`LastAction`)",
+                    "INSERT INTO `CMs` (`Address`, `IsWebSocket`, `Status`) VALUES(@IP, @IsWebSocket, @Status) ON DUPLICATE KEY UPDATE `Status` = VALUES(`Status`)",
                     new
                     {
                         IP = keyName,
                         IsWebSocket = (monitor.Server.ProtocolTypes & ProtocolTypes.WebSocket) > 0,
                         Status = result.ToString(),
-                        LastAction = lastAction
                     }
                 );
 
