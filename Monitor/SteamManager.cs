@@ -156,7 +156,7 @@ namespace StatusService
 
                 monitors.TryAdd(cm, newMonitor);
 
-                _ = UpdateCMStatus(newMonitor, EResult.Invalid, "New server");
+                _ = UpdateCMStatus(newMonitor, EResult.Pending, "New server");
 
                 newMonitor.Connect(DateTime.Now + TimeSpan.FromSeconds(++x % 40));
             }
@@ -178,6 +178,11 @@ namespace StatusService
 
             Log.WriteInfo("CM", "{0,40} | {1,10} | {2,20} | {3}", keyName, monitor.Server.ProtocolTypes, result, lastAction);
 
+            if (monitor.LastReportedStatus == result)
+            {
+                return;
+            }
+
             try
             {
                 await using var db = await GetConnection();
@@ -191,6 +196,8 @@ namespace StatusService
                         LastAction = lastAction
                     }
                 );
+
+                monitor.LastReportedStatus = result;
             }
             catch (MySqlException e)
             {

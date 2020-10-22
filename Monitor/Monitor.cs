@@ -16,6 +16,7 @@ namespace StatusService
         uint Reconnecting;
         bool IsDisconnecting;
 
+        public EResult LastReportedStatus { get; set; }
         public DateTime LastSeen { get; set; }
         DateTime LastSuccess = DateTime.Now;
         DateTime nextConnect = DateTime.MaxValue;
