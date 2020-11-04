@@ -93,7 +93,7 @@ namespace StatusService
 
             // Reset all statuses
             await using var db = await GetConnection();
-            await db.ExecuteAsync("UPDATE `CMs` SET `Status` = 'Invalid', `LastAction` = 'Application stop'");
+            await db.ExecuteAsync($"UPDATE `CMs` SET `Status` = {EResult.Invalid}");
         }
 
         public void Tick()
