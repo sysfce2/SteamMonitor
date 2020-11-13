@@ -17,8 +17,8 @@ namespace StatusService
     {
         class DatabaseRecord
         {
-            public string Address;
-            public bool IsWebSocket;
+            public string Address { get; set; }
+            public bool IsWebSocket { get; set; }
 
             public ServerRecord GetServerRecord()
             {
