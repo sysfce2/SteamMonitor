@@ -54,7 +54,7 @@ namespace StatusService
                 .WithConnectionTimeout(TimeSpan.FromSeconds(15))
             );
 
-            var path = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "database.txt");
+            var path = Path.Combine(AppContext.BaseDirectory, "database.txt");
 
             if (!File.Exists(path))
             {
