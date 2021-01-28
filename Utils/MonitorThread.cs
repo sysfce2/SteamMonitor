@@ -36,7 +36,7 @@ namespace StatusService
                 SteamManager.Instance.Tick();
             }
 
-            Log.WriteInfo(nameof(MonitorThread), "Stopping");
+            Log.WriteInfo("Stopping...");
             SteamManager.Instance.Stop().GetAwaiter().GetResult();
         }
     }

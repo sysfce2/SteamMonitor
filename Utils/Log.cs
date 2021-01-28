@@ -4,25 +4,28 @@ namespace StatusService
 {
     public static class Log
     {
-        private enum Category
+        public static void WriteStatus(string log)
         {
-            Info,
-            Error
+            WriteLine(log);
         }
 
-        public static void WriteInfo(string component, string format, params object[] args)
+        public static void WriteInfo(string log)
         {
-            WriteLine(Category.Info, component, format, args);
+            Console.ForegroundColor = ConsoleColor.Green;
+            WriteLine(log);
+            Console.ResetColor();
         }
 
-        public static void WriteError(string component, string format, params object[] args)
+        public static void WriteError(string log)
         {
-            WriteLine(Category.Error, component, format, args);
+            Console.ForegroundColor = ConsoleColor.Red;
+            WriteLine(log);
+            Console.ResetColor();
         }
 
-        private static void WriteLine(Category category, string component, string format, params object[] args)
+        private static void WriteLine(string log)
         {
-            Console.WriteLine($"{DateTime.Now.ToLongTimeString()} [{category.ToString().ToUpper()}] {component}: {string.Format(format, args)}");
+            Console.WriteLine($"{DateTime.Now.ToLongTimeString()} {log}");
         }
     }
 }

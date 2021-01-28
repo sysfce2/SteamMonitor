@@ -58,7 +58,7 @@ namespace StatusService
 
             if (!File.Exists(path))
             {
-                Log.WriteError("Database", "Put your MySQL connection string in database.txt");
+                Log.WriteError("Put your MySQL connection string in database.txt");
 
                 Environment.Exit(1);
             }
@@ -73,23 +73,23 @@ namespace StatusService
             // Seed CM list with old CMs in the database
             var servers = db.Query<DatabaseRecord>("SELECT `Address`, `IsWebSocket` FROM `CMs`").Select(x => x.GetServerRecord()).ToList();
 
-            Log.WriteInfo(nameof(SteamManager), "Got {0} old CMs", servers.Count);
+            Log.WriteInfo($"Got {servers.Count} old CMs");
 
             UpdateCMList(servers);
         }
 
         public async Task Stop()
         {
-            Log.WriteInfo(nameof(SteamManager), "Stopping");
+            Log.WriteInfo("Stopping...");
 
             foreach (var monitor in monitors.Values)
             {
-                Log.WriteInfo(nameof(SteamManager), "Disconnecting monitor {0}", ServerRecordToString(monitor.Server));
+                Log.WriteInfo($"Disconnecting monitor {ServerRecordToString(monitor.Server)}");
 
                 monitor.Disconnect();
             }
 
-            Log.WriteInfo(nameof(SteamManager), "All monitors disconnected");
+            Log.WriteInfo("All monitors disconnected");
 
             // Reset all statuses
             await using var db = await GetConnection();
@@ -117,7 +117,7 @@ namespace StatusService
         {
             var address = ServerRecordToString(monitor.Server);
 
-            Log.WriteInfo(nameof(SteamManager), $"Removing server: {address}");
+            Log.WriteInfo($"Removing server: {address}");
 
             monitors.TryRemove(monitor.Server.GetHost(), out _);
 
@@ -135,7 +135,7 @@ namespace StatusService
             }
             catch (MySqlException e)
             {
-                Log.WriteError(nameof(SteamManager), $"Failed to remove server: {e.Message}");
+                Log.WriteError($"Failed to remove server: {e.Message}");
             }
         }
 
@@ -163,7 +163,7 @@ namespace StatusService
 
             if (x > 0)
             {
-                Log.WriteInfo(nameof(SteamManager), $"There are now {monitors.Count} monitors, added {x} new ones");
+                Log.WriteInfo($"There are now {monitors.Count} monitors, added {x} new ones");
             }
         }
 
@@ -181,7 +181,7 @@ namespace StatusService
         {
             var keyName = ServerRecordToString(monitor.Server);
 
-            Log.WriteInfo("CM", "{0,40} | {1,10} | {2,20} | {3}", keyName, monitor.Server.ProtocolTypes, result, lastAction);
+            Log.WriteStatus($"> {keyName,40} | { monitor.Server.ProtocolTypes,10} | {result,20} | {lastAction}");
 
             if (monitor.LastReportedStatus == result)
             {
@@ -205,13 +205,13 @@ namespace StatusService
             }
             catch (MySqlException e)
             {
-                Log.WriteError(nameof(SteamManager), "Failed to update status of {0}: {1}", keyName, e.Message);
+                Log.WriteError($"Failed to update status of {keyName}: {e.Message}");
             }
         }
 
         private async Task UpdateCMListViaWebAPI()
         {
-            Log.WriteInfo(nameof(SteamManager), "Updating CM list using webapi");
+            Log.WriteInfo("Updating CM list using webapi");
 
             try
             {
@@ -219,13 +219,13 @@ namespace StatusService
                 var chinaRealmServers = (await LoadChinaCMList(SharedConfig)).Where(s => !globalServers.Contains(s)).ToList();
                 var servers = globalServers.Concat(chinaRealmServers);
 
-                Log.WriteInfo(nameof(SteamManager), $"Got {globalServers.Count} servers plus {chinaRealmServers.Count} chinese servers");
+                Log.WriteInfo($"Got {globalServers.Count} servers plus {chinaRealmServers.Count} chinese servers");
 
                 UpdateCMList(servers);
             }
             catch (Exception e)
             {
-                Log.WriteError(nameof(SteamManager), "Web API Exception: {0}", e);
+                Log.WriteError($"Web API Exception: {e}");
             }
         }
 
