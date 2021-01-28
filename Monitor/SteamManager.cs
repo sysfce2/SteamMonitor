@@ -36,7 +36,7 @@ namespace StatusService
 
         public readonly Random Random = new Random();
 
-        readonly ConcurrentDictionary<ServerRecord, Monitor> monitors;
+        readonly ConcurrentDictionary<string, Monitor> monitors;
 
         readonly SteamConfiguration SharedConfig;
 
@@ -46,7 +46,7 @@ namespace StatusService
 
         private SteamManager()
         {
-            monitors = new ConcurrentDictionary<ServerRecord, Monitor>();
+            monitors = new ConcurrentDictionary<string, Monitor>();
 
             SharedConfig = SteamConfiguration.Create(b => b
                 .WithDirectoryFetch(false)
@@ -119,7 +119,7 @@ namespace StatusService
 
             Log.WriteInfo(nameof(SteamManager), $"Removing server: {address}");
 
-            monitors.TryRemove(monitor.Server, out _);
+            monitors.TryRemove(monitor.Server.GetHost(), out _);
 
             try
             {
@@ -145,7 +145,7 @@ namespace StatusService
 
             foreach (var cm in cmList)
             {
-                if (monitors.TryGetValue(cm, out var monitor))
+                if (monitors.TryGetValue(cm.GetHost(), out var monitor))
                 {
                     monitor.LastSeen = DateTime.Now;
 
@@ -154,11 +154,16 @@ namespace StatusService
 
                 var newMonitor = new Monitor(cm, SharedConfig);
 
-                monitors.TryAdd(cm, newMonitor);
+                monitors.TryAdd(cm.GetHost(), newMonitor);
 
                 _ = UpdateCMStatus(newMonitor, EResult.Pending, "New server");
 
                 newMonitor.Connect(DateTime.Now + TimeSpan.FromSeconds(++x % 40));
+            }
+
+            if (x > 0)
+            {
+                Log.WriteInfo(nameof(SteamManager), $"There are now {monitors.Count} monitors, added {x} new ones");
             }
         }
 
