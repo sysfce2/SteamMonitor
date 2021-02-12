@@ -110,12 +110,12 @@ namespace StatusService
         {
             if (callback.Result != EResult.OK)
             {
-                SteamManager.Instance.NotifyCMOffline(this, callback.Result, $"LoggedOn: {callback.Result}");
+                SteamManager.Instance.NotifyCMOffline(this, callback.Result, "Logon error");
 
                 return;
             }
 
-            SteamManager.Instance.NotifyCMOnline(this, "Online");
+            SteamManager.Instance.NotifyCMOnline(this);
 
             LastSuccess = DateTime.Now;
 
@@ -127,7 +127,7 @@ namespace StatusService
 
         private void OnLoggedOff(SteamUser.LoggedOffCallback callback)
         {
-            SteamManager.Instance.NotifyCMOffline(this, callback.Result, $"LoggedOff: {callback.Result}");
+            SteamManager.Instance.NotifyCMOffline(this, callback.Result, "Logged off");
         }
 
         private static void OnCMList(SteamClient.CMListCallback callback)

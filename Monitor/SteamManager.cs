@@ -167,9 +167,9 @@ namespace StatusService
             }
         }
 
-        public void NotifyCMOnline(Monitor monitor, string lastAction)
+        public void NotifyCMOnline(Monitor monitor)
         {
-            _ = UpdateCMStatus(monitor, EResult.OK, lastAction);
+            _ = UpdateCMStatus(monitor, EResult.OK, "Online");
         }
 
         public void NotifyCMOffline(Monitor monitor, EResult result, string lastAction)
