@@ -146,7 +146,7 @@ namespace StatusService
                     monitor.LastSeen = DateTime.Now;
 
                     // Server on a particular port may be dead, so change it
-                    if (monitor.Reconnecting > 2 && monitor.Server != cm)
+                    if (monitor.Reconnecting > 2 && monitor.Server.ProtocolTypes == cm.ProtocolTypes && !monitor.Server.EndPoint.Equals(cm.EndPoint))
                     {
                         Log.WriteInfo($"Changed {monitor.Server.EndPoint} to {cm.EndPoint}");
 
