@@ -270,8 +270,12 @@ namespace StatusService
             {
                 ["cellid"] = cellId.ToString(),
                 ["maxcount"] = int.MaxValue.ToString(),
-                ["steamrealm"] = "steamchina",
             };
+
+            if (cellId == 47)
+            {
+                args.Add("steamrealm", "steamchina");
+            }
 
             var response = await directory.CallAsync(HttpMethod.Get, "GetCMList", 1, args).ConfigureAwait(false);
 
