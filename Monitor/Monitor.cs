@@ -7,13 +7,13 @@ namespace StatusService
 {
     class Monitor
     {
-        public ServerRecord Server { get; }
+        public ServerRecord Server { get; set; }
+        public uint Reconnecting { get; set; }
 
         readonly SteamClient Client;
         readonly SteamMonitorUser steamUser;
         readonly CallbackManager callbackMgr;
 
-        uint Reconnecting;
         bool IsDisconnecting;
 
         public EResult LastReportedStatus { get; set; }

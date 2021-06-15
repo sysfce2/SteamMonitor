@@ -121,7 +121,7 @@ namespace StatusService
             {
                 await using var db = await GetConnection();
                 await db.ExecuteAsync(
-                    "DELETE FROM`CMs` WHERE `Address` = @Address AND `IsWebSocket` = @IsWebSocket",
+                    "DELETE FROM `CMs` WHERE `Address` = @Address AND `IsWebSocket` = @IsWebSocket",
                     new
                     {
                         Address = address,
@@ -144,6 +144,15 @@ namespace StatusService
                 if (monitors.TryGetValue(cm.GetHost(), out var monitor))
                 {
                     monitor.LastSeen = DateTime.Now;
+
+                    // Server on a particular port may be dead, so change it
+                    if (monitor.Reconnecting > 2 && monitor.Server != cm)
+                    {
+                        monitor.Reconnecting = 0;
+                        monitor.Server = cm;
+
+                        Log.WriteInfo($"Changed {monitor.Server.EndPoint} to {cm.EndPoint}");
+                    }
 
                     continue;
                 }
