@@ -148,10 +148,10 @@ namespace StatusService
                     // Server on a particular port may be dead, so change it
                     if (monitor.Reconnecting > 2 && monitor.Server != cm)
                     {
+                        Log.WriteInfo($"Changed {monitor.Server.EndPoint} to {cm.EndPoint}");
+
                         monitor.Reconnecting = 0;
                         monitor.Server = cm;
-
-                        Log.WriteInfo($"Changed {monitor.Server.EndPoint} to {cm.EndPoint}");
                     }
 
                     continue;
