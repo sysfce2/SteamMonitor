@@ -71,7 +71,7 @@ namespace StatusService
 
             Log.WriteInfo($"Got {servers.Count} old CMs");
 
-            UpdateCMList(servers);
+            await UpdateCMList(servers);
         }
 
         public async Task Stop()
@@ -135,7 +135,7 @@ namespace StatusService
             }
         }
 
-        public void UpdateCMList(IEnumerable<ServerRecord> cmList)
+        public async Task UpdateCMList(IEnumerable<ServerRecord> cmList)
         {
             var x = 0;
 
@@ -150,6 +150,24 @@ namespace StatusService
                     {
                         Log.WriteInfo($"Changed {monitor.Server.EndPoint} to {cm.EndPoint}");
 
+                        try
+                        {
+                            await using var db = await GetConnection();
+                            await db.ExecuteAsync(
+                                "UPDATE `CMs` SET `Address` = @Address WHERE `Address` = @OldAddress AND `IsWebSocket` = @IsWebSocket",
+                                new
+                                {
+                                    Address = ServerRecordToString(cm),
+                                    OldAddress = ServerRecordToString(monitor.Server),
+                                    IsWebSocket = (monitor.Server.ProtocolTypes & ProtocolTypes.WebSocket) > 0,
+                                }
+                            );
+                        }
+                        catch (MySqlException e)
+                        {
+                            Log.WriteError($"Failed to change {cm.EndPoint}: {e.Message}");
+                        }
+
                         monitor.Reconnecting = 0;
                         monitor.Server = cm;
                     }
@@ -161,7 +179,7 @@ namespace StatusService
 
                 monitors.TryAdd(cm.GetHost(), newMonitor);
 
-                _ = UpdateCMStatus(newMonitor, EResult.Pending, "New server");
+                await UpdateCMStatus(newMonitor, EResult.Pending, "New server");
 
                 newMonitor.Connect(DateTime.Now + TimeSpan.FromSeconds(++x % 40));
             }
@@ -231,11 +249,11 @@ namespace StatusService
 
                     Log.WriteInfo($"Got {chinaRealmServers.Count} chinese servers");
 
-                    UpdateCMList(servers);
+                    await UpdateCMList(servers);
                 }
                 else
                 {
-                    UpdateCMList(globalServers);
+                    await UpdateCMList(globalServers);
                 }
             }
             catch (Exception e)

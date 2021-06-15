@@ -130,9 +130,9 @@ namespace StatusService
             SteamManager.Instance.NotifyCMOffline(this, callback.Result, "Logged off");
         }
 
-        private static void OnCMList(SteamClient.CMListCallback callback)
+        private static async void OnCMList(SteamClient.CMListCallback callback)
         {
-            SteamManager.Instance.UpdateCMList(callback.Servers);
+            await SteamManager.Instance.UpdateCMList(callback.Servers);
         }
     }
 }
