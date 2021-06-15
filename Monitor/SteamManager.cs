@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using MySqlConnector;
@@ -32,17 +31,14 @@ namespace StatusService
             }
         }
 
-        public static SteamManager Instance { get; } = new SteamManager();
-
-        public readonly Random Random = new Random();
+        public static SteamManager Instance { get; } = new();
+        public readonly Random Random = new();
 
         readonly ConcurrentDictionary<string, Monitor> monitors;
-
         readonly SteamConfiguration SharedConfig;
-
         readonly string databaseConnectionString;
-
         DateTime NextCMListUpdate;
+        uint CellID;
 
         private SteamManager()
         {
@@ -107,7 +103,7 @@ namespace StatusService
 
             if (DateTime.Now > NextCMListUpdate)
             {
-                NextCMListUpdate = DateTime.Now + TimeSpan.FromMinutes(15);
+                NextCMListUpdate = DateTime.Now + TimeSpan.FromMinutes(11) + TimeSpan.FromSeconds(Random.Next(10, 120));
 
                 Task.Run(UpdateCMListViaWebAPI);
             }
@@ -215,17 +211,32 @@ namespace StatusService
 
             try
             {
-                var globalServers = (await SteamDirectory.LoadAsync(SharedConfig, int.MaxValue, CancellationToken.None)).ToList();
-                var chinaRealmServers = (await LoadChinaCMList(SharedConfig)).Where(s => !globalServers.Contains(s)).ToList();
-                var servers = globalServers.Concat(chinaRealmServers);
+                var globalServers = (await LoadCMList(SharedConfig, CellID)).ToList();
 
-                Log.WriteInfo($"Got {globalServers.Count} servers plus {chinaRealmServers.Count} chinese servers");
+                Log.WriteInfo($"Got {globalServers.Count} servers from cell {CellID}");
 
-                UpdateCMList(servers);
+                if (CellID % 10 == 0)
+                {
+                    var chinaRealmServers = (await LoadCMList(SharedConfig, 47)).Where(s => !globalServers.Contains(s)).ToList(); // Shanghai cell
+                    var servers = globalServers.Concat(chinaRealmServers);
+
+                    Log.WriteInfo($"Got {chinaRealmServers.Count} chinese servers");
+
+                    UpdateCMList(servers);
+                }
+                else
+                {
+                    UpdateCMList(globalServers);
+                }
             }
             catch (Exception e)
             {
                 Log.WriteError($"Web API Exception: {e}");
+            }
+
+            if (++CellID >= 220)
+            {
+                CellID = 0;
             }
         }
 
@@ -243,12 +254,12 @@ namespace StatusService
             return $"{record.GetHost()}:{record.GetPort()}";
         }
 
-        private static async Task<List<ServerRecord>> LoadChinaCMList(SteamConfiguration configuration)
+        private static async Task<List<ServerRecord>> LoadCMList(SteamConfiguration configuration, uint cellId)
         {
             var directory = configuration.GetAsyncWebAPIInterface("ISteamDirectory");
             var args = new Dictionary<string, object>
             {
-                ["cellid"] = "47", // Shanghai
+                ["cellid"] = cellId.ToString(),
                 ["maxcount"] = int.MaxValue.ToString(),
                 ["steamrealm"] = "steamchina",
             };
