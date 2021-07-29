@@ -25,7 +25,7 @@ namespace StatusService
 
         private static void WriteLine(string log)
         {
-            Console.WriteLine($"{DateTime.Now.ToLongTimeString()} {log}");
+            Console.WriteLine($"{DateTime.Now:HH:mm:ss} {log}");
         }
     }
 }
