@@ -139,14 +139,16 @@ namespace StatusService
         {
             var x = 0;
 
-            foreach (var cm in cmList)
+            foreach (var cm in cmList.OrderBy(cm => cm.GetPort()))
             {
                 if (monitors.TryGetValue(cm.GetHost(), out var monitor))
                 {
                     monitor.LastSeen = DateTime.Now;
 
                     // Server on a particular port may be dead, so change it
-                    if (monitor.Reconnecting > 2 && monitor.Server.ProtocolTypes == cm.ProtocolTypes && !monitor.Server.EndPoint.Equals(cm.EndPoint))
+                    // for tcp servers port 27017 to be definitive
+                    // for websockets, there's not always 443 port, and other ports follow tcp ones
+                    if (monitor.Reconnecting > 2 && (monitor.Server.ProtocolTypes & ProtocolTypes.WebSocket) > 0 && !monitor.Server.EndPoint.Equals(cm.EndPoint))
                     {
                         Log.WriteInfo($"Changed {monitor.Server.EndPoint} to {cm.EndPoint}");
 
