@@ -34,7 +34,6 @@ namespace StatusService
             Client.AddHandler(steamUser);
 
             callbackMgr = new CallbackManager(Client);
-            callbackMgr.Subscribe<SteamClient.CMListCallback>(OnCMList);
             callbackMgr.Subscribe<SteamClient.ConnectedCallback>(OnConnected);
             callbackMgr.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);
             callbackMgr.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
@@ -128,11 +127,6 @@ namespace StatusService
         private void OnLoggedOff(SteamUser.LoggedOffCallback callback)
         {
             SteamManager.Instance.NotifyCMOffline(this, callback.Result, "Logged off");
-        }
-
-        private static async void OnCMList(SteamClient.CMListCallback callback)
-        {
-            await SteamManager.Instance.UpdateCMList(callback.Servers);
         }
     }
 }

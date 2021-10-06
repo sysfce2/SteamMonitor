@@ -135,7 +135,7 @@ namespace StatusService
             }
         }
 
-        public async Task UpdateCMList(IEnumerable<ServerRecord> cmList)
+        private async Task UpdateCMList(IEnumerable<ServerRecord> cmList)
         {
             var x = 0;
 
