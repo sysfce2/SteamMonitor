@@ -7,7 +7,7 @@ namespace StatusService
 {
     class Monitor
     {
-        public ServerRecord Server { get; set; }
+        public DatabaseRecord Server { get; set; }
         public uint Reconnecting { get; set; }
 
         readonly SteamClient Client;
@@ -24,7 +24,7 @@ namespace StatusService
         private static readonly TimeSpan CallbackTimeout = TimeSpan.FromMilliseconds(10);
         private static readonly TimeSpan NoSuccessRemoval = TimeSpan.FromDays(1);
 
-        public Monitor(ServerRecord server, SteamConfiguration config)
+        public Monitor(DatabaseRecord server, SteamConfiguration config)
         {
             Server = server;
 
@@ -66,7 +66,7 @@ namespace StatusService
 
                 Reconnecting++;
 
-                Task.Run(() => Client.Connect(Server));
+                Task.Run(() => Client.Connect(Server.GetServerRecord()));
             }
         }
 

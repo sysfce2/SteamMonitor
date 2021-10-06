@@ -12,7 +12,7 @@ namespace StatusService
 
             Console.CancelKeyPress += delegate
             {
-                Log.WriteInfo("Stopping...");
+                Log.WriteInfo("Stopping via Ctrl-C...");
 
                 monitorThread.Stop();
 

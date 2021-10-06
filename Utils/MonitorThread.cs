@@ -36,7 +36,7 @@ namespace StatusService
                 SteamManager.Instance.Tick();
             }
 
-            Log.WriteInfo("Stopping...");
+            Log.WriteInfo("Stopping MonitorLoop...");
             SteamManager.Instance.Stop().GetAwaiter().GetResult();
         }
     }

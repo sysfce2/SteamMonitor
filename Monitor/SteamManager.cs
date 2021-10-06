@@ -8,29 +8,11 @@ using System.Threading.Tasks;
 using Dapper;
 using MySqlConnector;
 using SteamKit2;
-using SteamKit2.Discovery;
 
 namespace StatusService
 {
     class SteamManager
     {
-        class DatabaseRecord
-        {
-            public string Address { get; set; }
-            public bool IsWebSocket { get; set; }
-
-            public ServerRecord GetServerRecord()
-            {
-                if (IsWebSocket)
-                {
-                    return ServerRecord.CreateWebSocketServer(Address);
-                }
-
-                ServerRecord.TryCreateSocketServer(Address, out var record);
-                return record;
-            }
-        }
-
         public static SteamManager Instance { get; } = new();
         public readonly Random Random = new();
 
@@ -67,7 +49,10 @@ namespace StatusService
             await using var db = await GetConnection();
 
             // Seed CM list with old CMs in the database
-            var servers = db.Query<DatabaseRecord>("SELECT `Address`, `IsWebSocket` FROM `CMs`").Select(x => x.GetServerRecord()).ToList();
+            var servers = (await db
+                .QueryAsync<(string Address, bool IsWebSocket, string Datacenter)> ("SELECT `Address`, `IsWebSocket`, `Datacenter` FROM `CMs`"))
+                .Select(s => new DatabaseRecord(s.Address, s.Datacenter, s.IsWebSocket))
+                .ToList();
 
             Log.WriteInfo($"Got {servers.Count} old CMs");
 
@@ -76,11 +61,9 @@ namespace StatusService
 
         public async Task Stop()
         {
-            Log.WriteInfo("Stopping...");
-
             foreach (var monitor in monitors.Values)
             {
-                Log.WriteInfo($"Disconnecting monitor {ServerRecordToString(monitor.Server)}");
+                Log.WriteInfo($"Disconnecting monitor {monitor.Server.GetString()}");
 
                 monitor.Disconnect();
             }
@@ -111,11 +94,11 @@ namespace StatusService
 
         public async Task RemoveCM(Monitor monitor)
         {
-            var address = ServerRecordToString(monitor.Server);
+            var address = monitor.Server.GetString();
 
             Log.WriteInfo($"Removing server: {address}");
 
-            monitors.TryRemove(monitor.Server.GetHost(), out _);
+            monitors.TryRemove(monitor.Server.GetUniqueKey(), out _);
 
             try
             {
@@ -125,7 +108,7 @@ namespace StatusService
                     new
                     {
                         Address = address,
-                        IsWebSocket = (monitor.Server.ProtocolTypes & ProtocolTypes.WebSocket) > 0 ? 1 : 0,
+                        IsWebSocket = monitor.Server.IsWebSocket,
                     }
                 );
             }
@@ -135,22 +118,22 @@ namespace StatusService
             }
         }
 
-        private async Task UpdateCMList(IEnumerable<ServerRecord> cmList)
+        private async Task UpdateCMList(IEnumerable<DatabaseRecord> cmList)
         {
             var x = 0;
 
-            foreach (var cm in cmList.OrderBy(cm => cm.GetPort()))
+            foreach (var cm in cmList.OrderBy(cm => cm.Port))
             {
-                if (monitors.TryGetValue(cm.GetHost(), out var monitor))
+                if (monitors.TryGetValue(cm.GetUniqueKey(), out var monitor))
                 {
                     monitor.LastSeen = DateTime.Now;
 
                     // Server on a particular port may be dead, so change it
                     // for tcp servers port 27017 to be definitive
                     // for websockets, there's not always 443 port, and other ports follow tcp ones
-                    if (monitor.Reconnecting > 2 && (monitor.Server.ProtocolTypes & ProtocolTypes.WebSocket) > 0 && !monitor.Server.EndPoint.Equals(cm.EndPoint))
+                    if (monitor.Reconnecting > 2 && monitor.Server.IsWebSocket && monitor.Server.Port != cm.Port && monitor.Server.Hostname != cm.Hostname)
                     {
-                        Log.WriteInfo($"Changed {monitor.Server.EndPoint} to {cm.EndPoint}");
+                        Log.WriteInfo($"Changed {monitor.Server.GetString()} to {cm.GetString()}");
 
                         try
                         {
@@ -159,15 +142,15 @@ namespace StatusService
                                 "UPDATE `CMs` SET `Address` = @Address WHERE `Address` = @OldAddress AND `IsWebSocket` = @IsWebSocket",
                                 new
                                 {
-                                    Address = ServerRecordToString(cm),
-                                    OldAddress = ServerRecordToString(monitor.Server),
-                                    IsWebSocket = (monitor.Server.ProtocolTypes & ProtocolTypes.WebSocket) > 0,
+                                    Address = cm.GetString(),
+                                    OldAddress = monitor.Server.GetString(),
+                                    IsWebSocket = monitor.Server.IsWebSocket,
                                 }
                             );
                         }
                         catch (MySqlException e)
                         {
-                            Log.WriteError($"Failed to change {cm.EndPoint}: {e.Message}");
+                            Log.WriteError($"Failed to change {monitor.Server.GetString()}: {e.Message}");
                         }
 
                         monitor.Reconnecting = 0;
@@ -179,7 +162,7 @@ namespace StatusService
 
                 var newMonitor = new Monitor(cm, SharedConfig);
 
-                monitors.TryAdd(cm.GetHost(), newMonitor);
+                monitors.TryAdd(cm.GetUniqueKey(), newMonitor);
 
                 await UpdateCMStatus(newMonitor, EResult.Pending, "New server");
 
@@ -204,9 +187,10 @@ namespace StatusService
 
         private async Task UpdateCMStatus(Monitor monitor, EResult result, string lastAction)
         {
-            var keyName = ServerRecordToString(monitor.Server);
+            var keyName = monitor.Server.GetString();
+            var type = monitor.Server.IsWebSocket ? "WS" : "TCP";
 
-            Log.WriteStatus($"> {keyName,40} | { monitor.Server.ProtocolTypes,10} | {result,20} | {lastAction}");
+            Log.WriteStatus($"> {keyName,40} | {type,-3} | {monitor.Server.Datacenter,-4} | {result,-20} | {lastAction}");
 
             if (monitor.LastReportedStatus == result)
             {
@@ -217,12 +201,13 @@ namespace StatusService
             {
                 await using var db = await GetConnection();
                 await db.ExecuteAsync(
-                    "INSERT INTO `CMs` (`Address`, `IsWebSocket`, `Status`) VALUES(@IP, @IsWebSocket, @Status) ON DUPLICATE KEY UPDATE `Status` = VALUES(`Status`)",
+                    "INSERT INTO `CMs` (`Address`, `IsWebSocket`, `Datacenter`, `Status`) VALUES(@IP, @IsWebSocket, @Datacenter, @Status) ON DUPLICATE KEY UPDATE `Status` = VALUES(`Status`)",
                     new
                     {
                         IP = keyName,
-                        IsWebSocket = (monitor.Server.ProtocolTypes & ProtocolTypes.WebSocket) > 0,
-                        Status = (int)result
+                        IsWebSocket = monitor.Server.IsWebSocket,
+                        Datacenter = monitor.Server.Datacenter,
+                        Status = (int)result,
                     }
                 );
 
@@ -278,12 +263,7 @@ namespace StatusService
             return connection;
         }
 
-        private static string ServerRecordToString(ServerRecord record)
-        {
-            return $"{record.GetHost()}:{record.GetPort()}";
-        }
-
-        private static async Task<List<ServerRecord>> LoadCMList(SteamConfiguration configuration, uint cellId)
+        private static async Task<List<DatabaseRecord>> LoadCMList(SteamConfiguration configuration, uint cellId)
         {
             var directory = configuration.GetAsyncWebAPIInterface("ISteamDirectory");
             var args = new Dictionary<string, object>
@@ -294,40 +274,20 @@ namespace StatusService
 
             if (cellId == 47)
             {
-                args.Add("steamrealm", "steamchina");
+                args.Add("realm", "steamchina");
             }
 
-            var response = await directory.CallAsync(HttpMethod.Get, "GetCMList", 1, args).ConfigureAwait(false);
+            var response = await directory.CallAsync(HttpMethod.Get, "GetCMListForConnect", 1, args);
+            var serverList = response["serverlist"];
+            var serverRecords = new List<DatabaseRecord>(serverList.Children.Count);
 
-            var result = (EResult)response["result"].AsInteger();
-            if (result != EResult.OK)
+            foreach (var child in serverList.Children)
             {
-                throw new InvalidOperationException($"Steam Web API returned EResult.{result}");
-            }
-
-            var socketList = response["serverlist"];
-            var websocketList = response["serverlist_websockets"];
-
-            var serverRecords = new List<ServerRecord>(socketList.Children.Count + websocketList.Children.Count);
-
-            foreach (var child in socketList.Children)
-            {
-                if (child.Value is null || !ServerRecord.TryCreateSocketServer(child.Value, out var record))
-                {
-                    continue;
-                }
-
-                serverRecords.Add(record);
-            }
-
-            foreach (var child in websocketList.Children)
-            {
-                if (child.Value is null)
-                {
-                    continue;
-                }
-
-                serverRecords.Add(ServerRecord.CreateWebSocketServer(child.Value));
+                serverRecords.Add(new DatabaseRecord(
+                    child["endpoint"].AsString(),
+                    child["dc"].AsString(),
+                    child["type"].AsString() == "websockets"
+                ));
             }
 
             return serverRecords;
