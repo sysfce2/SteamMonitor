@@ -78,15 +78,16 @@ namespace StatusService
         public void Tick()
         {
             var monitorsCached = monitors.Values.ToList();
+            var now = DateTime.Now;
 
             foreach (var monitor in monitorsCached)
             {
-                monitor.DoTick();
+                monitor.DoTick(now);
             }
 
-            if (DateTime.Now > NextCMListUpdate)
+            if (now > NextCMListUpdate)
             {
-                NextCMListUpdate = DateTime.Now + TimeSpan.FromMinutes(11) + TimeSpan.FromSeconds(Random.Next(10, 120));
+                NextCMListUpdate = now + TimeSpan.FromMinutes(11) + TimeSpan.FromSeconds(Random.Next(10, 120));
 
                 Task.Run(UpdateCMListViaWebAPI);
             }
@@ -121,12 +122,13 @@ namespace StatusService
         private async Task UpdateCMList(IEnumerable<DatabaseRecord> cmList)
         {
             var x = 0;
+            var now = DateTime.Now;
 
             foreach (var cm in cmList.OrderBy(cm => cm.Port))
             {
                 if (monitors.TryGetValue(cm.GetUniqueKey(), out var monitor))
                 {
-                    monitor.LastSeen = DateTime.Now;
+                    monitor.LastSeen = now;
 
                     // Server on a particular port may be dead, so change it
                     // for tcp servers port 27017 to be definitive
@@ -165,7 +167,7 @@ namespace StatusService
 
                 await UpdateCMStatus(newMonitor, EResult.Pending, "New server");
 
-                newMonitor.Connect(DateTime.Now + TimeSpan.FromSeconds(++x % 40));
+                newMonitor.Connect(now + TimeSpan.FromSeconds(++x % 40));
             }
 
             if (x > 0)

@@ -40,10 +40,9 @@ namespace StatusService
             callbackMgr.Subscribe<SteamUser.LoggedOffCallback>(OnLoggedOff);
         }
 
-        public void Connect(DateTime? when = null)
+        public void Connect(DateTime when)
         {
-            when ??= DateTime.Now;
-            nextConnect = when.Value;
+            nextConnect = when;
         }
 
         public void Disconnect()
@@ -52,7 +51,7 @@ namespace StatusService
             Client.Disconnect();
         }
 
-        public void DoTick()
+        public void DoTick(DateTime now)
         {
             // we'll check for callbacks every 10ms
             // thread quantum granularity might hose us,
@@ -60,9 +59,9 @@ namespace StatusService
 
             callbackMgr.RunWaitAllCallbacks(CallbackTimeout);
 
-            if (DateTime.Now >= nextConnect)
+            if (now >= nextConnect)
             {
-                nextConnect = DateTime.Now + TimeSpan.FromMinutes(1);
+                nextConnect = now + TimeSpan.FromMinutes(1);
 
                 Reconnecting++;
 
