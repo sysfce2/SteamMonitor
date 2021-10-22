@@ -93,7 +93,7 @@ namespace StatusService
                 return;
             }
 
-            var numSeconds = SteamManager.Instance.Random.Next(10, 30);
+            var numSeconds = SteamManager.Instance.Random.Next(10, 60);
             Connect(now + TimeSpan.FromSeconds(numSeconds));
 
             // If Steam dies, don't say next connect is planned
@@ -102,9 +102,9 @@ namespace StatusService
                 Reconnecting = 2;
             }
 
-            if (Reconnecting > 10)
+            if (Reconnecting >= 10)
             {
-                SteamManager.Instance.NotifyCMOffline(this, EResult.NoConnection, $"Disconnected (#{Reconnecting}) (Seen: {now - LastSeen} Success: {now - LastSuccess})");
+                SteamManager.Instance.NotifyCMOffline(this, EResult.NoConnection, $"Disconnected (#{Reconnecting}) (Seen: {LastSeen} Success: {LastSuccess})");
             }
             else if (Reconnecting == 1)
             {
