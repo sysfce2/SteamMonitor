@@ -131,7 +131,7 @@ namespace StatusService
                     // Server on a particular port may be dead, so change it
                     // for tcp servers port 27017 to be definitive
                     // for websockets, there's not always 443 port, and other ports follow tcp ones
-                    if (monitor.Reconnecting > 2 && monitor.Server.Port != cm.Port && monitor.Server.Hostname != cm.Hostname)
+                    if (monitor.Reconnecting % 10 == 0 && monitor.Server.Port != cm.Port)
                     {
                         Log.WriteInfo($"Changed {monitor.Server.GetString()} to {cm.GetString()}");
 
@@ -153,7 +153,6 @@ namespace StatusService
                             Log.WriteError($"Failed to change {monitor.Server.GetString()}: {e.Message}");
                         }
 
-                        monitor.Reconnecting = 0;
                         monitor.Server = cm;
                     }
 

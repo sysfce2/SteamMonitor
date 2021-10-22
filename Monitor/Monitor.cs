@@ -102,7 +102,18 @@ namespace StatusService
                 Reconnecting = 2;
             }
 
-            SteamManager.Instance.NotifyCMOffline(this, Reconnecting == 1 ? EResult.OK : EResult.NoConnection, $"Disconnected (#{Reconnecting})");
+            if (Reconnecting > 10)
+            {
+                SteamManager.Instance.NotifyCMOffline(this, EResult.NoConnection, $"Disconnected (#{Reconnecting}) (Seen: {now - LastSeen} Success: {now - LastSuccess})");
+            }
+            else if (Reconnecting == 1)
+            {
+                SteamManager.Instance.NotifyCMOffline(this, EResult.OK, $"Reconnecting");
+            }
+            else
+            {
+                SteamManager.Instance.NotifyCMOffline(this, EResult.NoConnection, $"Disconnected (#{Reconnecting})");
+            }
         }
 
         private void OnLoggedOn(SteamUser.LoggedOnCallback callback)
