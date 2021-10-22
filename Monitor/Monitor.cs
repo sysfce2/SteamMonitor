@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using SteamKit2;
-using SteamKit2.Discovery;
 
 namespace StatusService
 {

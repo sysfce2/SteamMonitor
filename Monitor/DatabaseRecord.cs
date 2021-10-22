@@ -13,9 +13,9 @@ namespace StatusService
         public DatabaseRecord(string address, string datacenter, bool isWebsocket)
         {
             var indexOfColon = address.IndexOf(':');
-            var portNumber = address.Substring(indexOfColon + 1);
+            var portNumber = address[(indexOfColon + 1)..];
 
-            Hostname = address.Substring(0, indexOfColon);
+            Hostname = address[..indexOfColon];
             Port = int.Parse(portNumber);
             IsWebSocket = isWebsocket;
             Datacenter = datacenter;

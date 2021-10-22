@@ -14,7 +14,7 @@ namespace StatusService
 
             logonMsg.ProtoHeader.steamid = steamId;
             logonMsg.Body.protocol_version = MsgClientLogon.CurrentProtocol;
-            logonMsg.Body.obfuscated_private_ip = new CMsgIPAddress {v4 = randomIp};
+            logonMsg.Body.obfuscated_private_ip = new CMsgIPAddress { v4 = randomIp };
             logonMsg.Body.deprecated_obfustucated_private_ip = randomIp;
 
             Client.Send(logonMsg);

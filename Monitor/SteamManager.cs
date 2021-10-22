@@ -50,7 +50,7 @@ namespace StatusService
 
             // Seed CM list with old CMs in the database
             var servers = (await db
-                .QueryAsync<(string Address, bool IsWebSocket, string Datacenter)> ("SELECT `Address`, `IsWebSocket`, `Datacenter` FROM `CMs`"))
+                .QueryAsync<(string Address, bool IsWebSocket, string Datacenter)>("SELECT `Address`, `IsWebSocket`, `Datacenter` FROM `CMs`"))
                 .Select(s => new DatabaseRecord(s.Address, s.Datacenter, s.IsWebSocket))
                 .ToList();
 
@@ -109,7 +109,7 @@ namespace StatusService
                     new
                     {
                         Address = address,
-                        IsWebSocket = monitor.Server.IsWebSocket,
+                        monitor.Server.IsWebSocket,
                     }
                 );
             }
@@ -146,7 +146,7 @@ namespace StatusService
                                 {
                                     Address = cm.GetString(),
                                     OldAddress = monitor.Server.GetString(),
-                                    IsWebSocket = monitor.Server.IsWebSocket,
+                                    monitor.Server.IsWebSocket,
                                 }
                             );
                         }
@@ -206,8 +206,8 @@ namespace StatusService
                     new
                     {
                         IP = keyName,
-                        IsWebSocket = monitor.Server.IsWebSocket,
-                        Datacenter = monitor.Server.Datacenter,
+                        monitor.Server.IsWebSocket,
+                        monitor.Server.Datacenter,
                         Status = (int)result,
                     }
                 );

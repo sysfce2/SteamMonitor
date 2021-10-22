@@ -3,6 +3,9 @@
     <TargetFramework>net5.0</TargetFramework>
     <RollForward>LatestMajor</RollForward>
     <OutputType>Exe</OutputType>
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <InvariantGlobalization>true</InvariantGlobalization>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
   </PropertyGroup>
