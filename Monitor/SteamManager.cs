@@ -123,17 +123,20 @@ namespace StatusService
         {
             var x = 0;
             var now = DateTime.Now;
+            var changed = new HashSet<string>();
 
             foreach (var cm in cmList.OrderBy(cm => cm.Port))
             {
-                if (monitors.TryGetValue(cm.GetUniqueKey(), out var monitor))
+                var uniqueKey = cm.GetUniqueKey();
+
+                if (monitors.TryGetValue(uniqueKey, out var monitor))
                 {
                     monitor.LastSeen = now;
 
                     // Server on a particular port may be dead, so change it
                     // for tcp servers port 27017 to be definitive
                     // for websockets, there's not always 443 port, and other ports follow tcp ones
-                    if (monitor.Reconnecting > 2 && monitor.Server.Port != cm.Port)
+                    if (monitor.Reconnecting > 2 && monitor.Server.Port != cm.Port && !changed.Contains(uniqueKey))
                     {
                         Log.WriteInfo($"Changed {monitor.Server.GetString()} to {cm.GetString()}");
 
@@ -156,6 +159,7 @@ namespace StatusService
                         }
 
                         monitor.Server = cm;
+                        changed.Add(uniqueKey);
                     }
 
                     continue;
@@ -163,7 +167,7 @@ namespace StatusService
 
                 var newMonitor = new Monitor(cm, SharedConfig);
 
-                monitors.TryAdd(cm.GetUniqueKey(), newMonitor);
+                monitors.TryAdd(uniqueKey, newMonitor);
 
                 await UpdateCMStatus(newMonitor, EResult.Pending, "New server");
 
