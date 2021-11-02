@@ -19,6 +19,11 @@ namespace StatusService
                 Environment.Exit(0);
             };
 
+            AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
+            {
+                monitorThread.Stop();
+            };
+
             AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
             {
                 Log.WriteError($"Unhandled exception: {e.ExceptionObject}");
