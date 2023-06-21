@@ -91,7 +91,7 @@ namespace StatusService
                 return;
             }
 
-            var numSeconds = SteamManager.Instance.Random.Next(10, 60);
+            var numSeconds = Random.Shared.Next(10, 60);
             Connect(now + TimeSpan.FromSeconds(numSeconds));
 
             // If Steam dies, don't say next connect is planned
@@ -130,7 +130,7 @@ namespace StatusService
             // schedule a random reconnect
             Connect(LastSuccess
                 + TimeSpan.FromMinutes(5)
-                + TimeSpan.FromMinutes(SteamManager.Instance.Random.NextDouble() * 5));
+                + TimeSpan.FromMinutes(Random.Shared.NextDouble() * 5));
         }
 
         private void OnLoggedOff(SteamUser.LoggedOffCallback callback)

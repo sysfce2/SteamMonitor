@@ -13,8 +13,9 @@ namespace StatusService
 {
     class SteamManager
     {
+        private const int HighestCellId = 220;
+
         public static SteamManager Instance { get; } = new();
-        public readonly Random Random = new();
 
         readonly ConcurrentDictionary<string, Monitor> monitors;
         readonly SteamConfiguration SharedConfig;
@@ -46,6 +47,8 @@ namespace StatusService
 
         public async Task Start()
         {
+            NextCMListUpdate = DateTime.Now.AddMinutes(20);
+
             await using var db = await GetConnection();
 
             // Seed CM list with old CMs in the database
@@ -57,6 +60,8 @@ namespace StatusService
             Log.WriteInfo($"Got {servers.Count} old CMs");
 
             await UpdateCMList(servers);
+
+            _ = Task.Run(ScanAllCellIds);
         }
 
         public async Task Stop()
@@ -87,7 +92,7 @@ namespace StatusService
 
             if (now > NextCMListUpdate)
             {
-                NextCMListUpdate = now + TimeSpan.FromMinutes(11) + TimeSpan.FromSeconds(Random.Next(10, 120));
+                NextCMListUpdate = now + TimeSpan.FromMinutes(11) + TimeSpan.FromSeconds(Random.Shared.Next(10, 120));
 
                 Task.Run(UpdateCMListViaWebAPI);
             }
@@ -253,9 +258,31 @@ namespace StatusService
                 Log.WriteError($"Web API Exception: {e}");
             }
 
-            if (++CellID >= 220)
+            if (++CellID >= HighestCellId)
             {
                 CellID = 0;
+            }
+        }
+
+        private async Task ScanAllCellIds()
+        {
+            Log.WriteInfo("Updating CM list using webapi by checking all cellids");
+
+            foreach (var cellId in Enumerable.Range(0, HighestCellId).OrderBy(x => Random.Shared.Next()).Select(v => (uint)v))
+            {
+                try
+                {
+                    var servers = (await LoadCMList(SharedConfig, cellId)).ToList();
+
+                    Log.WriteInfo($"Got {servers.Count} servers from cell {cellId}");
+
+                    await UpdateCMList(servers);
+                    await Task.Delay(Random.Shared.Next(10, 1000));
+                }
+                catch (Exception e)
+                {
+                    Log.WriteError($"Web API Exception: {e}");
+                }
             }
         }
 
