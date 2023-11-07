@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <RollForward>LatestMajor</RollForward>
     <OutputType>Exe</OutputType>
     <DebugType>embedded</DebugType>
@@ -11,8 +11,8 @@
     <ServerGarbageCollection>true</ServerGarbageCollection>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.0.143" />
-    <PackageReference Include="MySqlConnector" Version="2.2.6" />
-    <PackageReference Include="SteamKit2" Version="2.5.0-Beta.1" />
+    <PackageReference Include="Dapper" Version="2.1.21" />
+    <PackageReference Include="MySqlConnector" Version="2.3.0" />
+    <PackageReference Include="SteamKit2" Version="2.5.0" />
   </ItemGroup>
 </Project>
