@@ -30,7 +30,7 @@ namespace StatusService
 
             SharedConfig = SteamConfiguration.Create(b => b
                 .WithDirectoryFetch(false)
-                .WithProtocolTypes(ProtocolTypes.Tcp | ProtocolTypes.WebSocket)
+                .WithProtocolTypes(ProtocolTypes.WebSocket)
                 .WithConnectionTimeout(TimeSpan.FromSeconds(15))
             );
 
@@ -293,7 +293,7 @@ namespace StatusService
         {
             var connection = new MySqlConnection(databaseConnectionString);
 
-            await connection.OpenAsync();
+            await connection.OpenAsync(Program.Cts.Token);
 
             return connection;
         }

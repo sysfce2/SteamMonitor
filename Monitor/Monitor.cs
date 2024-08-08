@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using SteamKit2;
 
@@ -12,6 +13,7 @@ namespace StatusService
         readonly SteamClient Client;
         readonly SteamMonitorUser steamUser;
         readonly CallbackManager callbackMgr;
+        readonly CancellationToken cancellationToken;
 
         bool IsDisconnecting;
 
@@ -20,7 +22,6 @@ namespace StatusService
         DateTime LastSuccess = DateTime.Now;
         DateTime nextConnect = DateTime.MaxValue;
 
-        private static readonly TimeSpan CallbackTimeout = TimeSpan.FromMilliseconds(10);
         private static readonly TimeSpan NoSuccessRemoval = TimeSpan.FromDays(1);
 
         public Monitor(DatabaseRecord server, SteamConfiguration config)
@@ -37,6 +38,10 @@ namespace StatusService
             callbackMgr.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);
             callbackMgr.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
             callbackMgr.Subscribe<SteamUser.LoggedOffCallback>(OnLoggedOff);
+
+            cancellationToken = Program.Cts.Token;
+
+            Task.Factory.StartNew(HandleCallbacks, cancellationToken, TaskCreationOptions.LongRunning | TaskCreationOptions.PreferFairness, TaskScheduler.Default);
         }
 
         public void Connect(DateTime when)
@@ -50,14 +55,23 @@ namespace StatusService
             Client.Disconnect();
         }
 
+        public async Task HandleCallbacks()
+        {
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    await callbackMgr.RunWaitCallbackAsync(cancellationToken);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                //
+            }
+        }
+
         public void DoTick(DateTime now)
         {
-            // we'll check for callbacks every 10ms
-            // thread quantum granularity might hose us,
-            // but it should wake often enough to handle callbacks within a single thread
-
-            callbackMgr.RunWaitAllCallbacks(CallbackTimeout);
-
             if (now >= nextConnect)
             {
                 nextConnect = now + TimeSpan.FromMinutes(1);

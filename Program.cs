@@ -1,27 +1,29 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace StatusService
 {
     static class Program
     {
-        static void Main()
+        public static CancellationTokenSource Cts = new();
+
+        static async Task Main()
         {
             Console.Title = "Steam Monitor";
-
-            var monitorThread = new MonitorThread();
 
             Console.CancelKeyPress += delegate
             {
                 Log.WriteInfo("Stopping via Ctrl-C...");
 
-                monitorThread.Stop();
+                Cts.Cancel();
 
                 Environment.Exit(0);
             };
 
             AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
             {
-                monitorThread.Stop();
+                Cts.Cancel();
             };
 
             AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
@@ -29,7 +31,25 @@ namespace StatusService
                 Log.WriteError($"Unhandled exception: {e.ExceptionObject}");
             };
 
-            monitorThread.Start();
+            await SteamManager.Instance.Start();
+
+            try
+            {
+                using var timer = new PeriodicTimer(TimeSpan.FromSeconds(4));
+                var token = Cts.Token;
+
+                while (await timer.WaitForNextTickAsync(token))
+                {
+                    SteamManager.Instance.Tick();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                //
+            }
+
+            Log.WriteInfo("Stopping...");
+            await SteamManager.Instance.Stop();
         }
     }
 }
