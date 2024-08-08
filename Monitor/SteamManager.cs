@@ -300,6 +300,7 @@ namespace StatusService
             var directory = configuration.GetAsyncWebAPIInterface("ISteamDirectory");
             var args = new Dictionary<string, object>
             {
+                ["cmtype"] = "websockets",
                 ["cellid"] = cellId.ToString(),
                 ["maxcount"] = int.MaxValue.ToString(),
             };
