@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using MySqlConnector;
@@ -96,6 +97,8 @@ namespace StatusService
 
                 Task.Run(UpdateCMListViaWebAPI);
             }
+
+            Thread.Sleep(1000);
         }
 
         public async Task RemoveCM(Monitor monitor)
