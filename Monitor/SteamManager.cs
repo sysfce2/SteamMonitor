@@ -6,7 +6,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Dapper;
 using MySqlConnector;
 using SteamKit2;
 
@@ -51,12 +50,19 @@ namespace StatusService
             NextCMListUpdate = DateTime.Now.AddMinutes(20);
 
             await using var db = await GetConnection();
+            var servers = new List<DatabaseRecord>();
 
             // Seed CM list with old CMs in the database
-            var servers = (await db
-                .QueryAsync<(string Address, bool IsWebSocket, string Datacenter)>("SELECT `Address`, `IsWebSocket`, `Datacenter` FROM `CMs`"))
-                .Select(s => new DatabaseRecord(s.Address, s.Datacenter, s.IsWebSocket))
-                .ToList();
+            await using var cmd = new MySqlCommand("SELECT `Address`, `IsWebSocket`, `Datacenter` FROM `CMs`", db);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var address = reader.GetString(0);
+                var isWebSocket = reader.GetBoolean(1);
+                var datacenter = reader.GetString(2);
+
+                servers.Add(new DatabaseRecord(address, datacenter, isWebSocket));
+            }
 
             Log.WriteInfo($"Got {servers.Count} old CMs");
 
@@ -78,7 +84,8 @@ namespace StatusService
 
             // Reset all statuses
             await using var db = await GetConnection();
-            await db.ExecuteAsync($"UPDATE `CMs` SET `Status` = {(int)EResult.Invalid}");
+            await using var cmd = new MySqlCommand($"UPDATE `CMs` SET `Status` = {(int)EResult.Invalid}", db);
+            await cmd.ExecuteNonQueryAsync();
         }
 
         public void Tick()
@@ -112,14 +119,11 @@ namespace StatusService
             try
             {
                 await using var db = await GetConnection();
-                await db.ExecuteAsync(
-                    "DELETE FROM `CMs` WHERE `Address` = @Address AND `IsWebSocket` = @IsWebSocket",
-                    new
-                    {
-                        Address = address,
-                        monitor.Server.IsWebSocket,
-                    }
-                );
+                await using var cmd = new MySqlCommand("DELETE FROM `CMs` WHERE `Address` = @Address AND `IsWebSocket` = @IsWebSocket", db);
+                cmd.Parameters.AddWithValue("@Address", address);
+                cmd.Parameters.AddWithValue("@IsWebSocket", monitor.Server.IsWebSocket);
+
+                await cmd.ExecuteNonQueryAsync();
             }
             catch (MySqlException e)
             {
@@ -151,15 +155,12 @@ namespace StatusService
                         try
                         {
                             await using var db = await GetConnection();
-                            await db.ExecuteAsync(
-                                "UPDATE `CMs` SET `Address` = @Address WHERE `Address` = @OldAddress AND `IsWebSocket` = @IsWebSocket",
-                                new
-                                {
-                                    Address = cm.GetString(),
-                                    OldAddress = monitor.Server.GetString(),
-                                    monitor.Server.IsWebSocket,
-                                }
-                            );
+                            await using var cmd = new MySqlCommand("UPDATE `CMs` SET `Address` = @Address WHERE `Address` = @OldAddress AND `IsWebSocket` = @IsWebSocket", db);
+                            cmd.Parameters.AddWithValue("@Address", cm.GetString());
+                            cmd.Parameters.AddWithValue("@OldAddress", monitor.Server.GetString());
+                            cmd.Parameters.AddWithValue("@IsWebSocket", monitor.Server.IsWebSocket);
+
+                            await cmd.ExecuteNonQueryAsync();
                         }
                         catch (MySqlException e)
                         {
@@ -213,16 +214,13 @@ namespace StatusService
             try
             {
                 await using var db = await GetConnection();
-                await db.ExecuteAsync(
-                    "INSERT INTO `CMs` (`Address`, `IsWebSocket`, `Datacenter`, `Status`) VALUES(@IP, @IsWebSocket, @Datacenter, @Status) ON DUPLICATE KEY UPDATE `Status` = VALUES(`Status`)",
-                    new
-                    {
-                        IP = keyName,
-                        monitor.Server.IsWebSocket,
-                        monitor.Server.Datacenter,
-                        Status = (int)result,
-                    }
-                );
+                await using var cmd = new MySqlCommand("INSERT INTO `CMs` (`Address`, `IsWebSocket`, `Datacenter`, `Status`) VALUES(@IP, @IsWebSocket, @Datacenter, @Status) ON DUPLICATE KEY UPDATE `Status` = VALUES(`Status`)", db);
+                cmd.Parameters.AddWithValue("@IP", keyName);
+                cmd.Parameters.AddWithValue("@IsWebSocket", monitor.Server.IsWebSocket);
+                cmd.Parameters.AddWithValue("@Datacenter", monitor.Server.Datacenter);
+                cmd.Parameters.AddWithValue("@Status", (int)result);
+
+                await cmd.ExecuteNonQueryAsync();
 
                 monitor.LastReportedStatus = result;
             }
