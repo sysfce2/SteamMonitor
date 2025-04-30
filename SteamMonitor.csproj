@@ -8,10 +8,11 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.1.35" />
-    <PackageReference Include="MySqlConnector" Version="2.3.7" />
-    <PackageReference Include="SteamKit2" Version="3.0.0-Beta.5" />
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="MySqlConnector" Version="2.4.0" />
+    <PackageReference Include="SteamKit2" Version="3.1.0" />
   </ItemGroup>
 </Project>

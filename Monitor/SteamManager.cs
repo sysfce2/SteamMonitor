@@ -301,7 +301,7 @@ namespace StatusService
         private static async Task<List<DatabaseRecord>> LoadCMList(SteamConfiguration configuration, uint cellId)
         {
             var directory = configuration.GetAsyncWebAPIInterface("ISteamDirectory");
-            var args = new Dictionary<string, object>
+            var args = new Dictionary<string, object?>
             {
                 ["cmtype"] = "websockets",
                 ["cellid"] = cellId.ToString(),
@@ -319,9 +319,17 @@ namespace StatusService
 
             foreach (var child in serverList.Children)
             {
+                var endpoint = child["endpoint"].AsString();
+                var dc = child["dc"].AsString();
+
+                if (endpoint == null || dc == null)
+                {
+                    continue;
+                }
+
                 serverRecords.Add(new DatabaseRecord(
-                    child["endpoint"].AsString(),
-                    child["dc"].AsString(),
+                    endpoint,
+                    dc,
                     child["type"].AsString() == "websockets"
                 ));
             }
